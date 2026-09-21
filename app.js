@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: 'ppo',
                 name: 'Comprehensive PPO',
                 type: 'Low Deductible Plan',
-                monthlyPremium: 3500,
+                monthlyPremium: 3800,
                 annualDeductible: 10000,
                 copayPercent: 10,
                 outOfPocketMax: 35000
@@ -801,48 +801,146 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============================================
-    // HEALTH MATRIX RENDERER
+    // HEALTH MATRIX RENDERER (USER EDITABLE INPUTS)
     // ============================================
     function renderHealthView() {
         const sym = state.currencySymbols[state.targetCurrency] || '₹';
         
         let html = '';
         state.healthPlans.forEach(plan => {
-            const annualPremium = plan.monthlyPremium * 12;
-            const worstCaseCost = annualPremium + plan.outOfPocketMax;
+            const annualPremium = (plan.monthlyPremium || 0) * 12;
+            const worstCaseCost = annualPremium + (plan.outOfPocketMax || 0);
 
             html += `
-                <div class="health-plan-card">
+                <div class="health-plan-card" data-plan-id="${plan.id}">
                     <div class="plan-header">
                         <div class="plan-title">${plan.name}</div>
                         <span class="brand-badge">${plan.type}</span>
                     </div>
-                    <div class="plan-stat">
-                        <span>Monthly Premium:</span>
-                        <span class="plan-stat-val" style="color:var(--accent-amber);">${sym}${plan.monthlyPremium.toLocaleString()}/mo</span>
+
+                    <!-- Editable User Inputs -->
+                    <div class="form-grid margin-top-md">
+                        <div class="form-group">
+                            <label for="plan-input-${plan.id}-premium">Monthly Premium (${sym})</label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">${sym}</span>
+                                <input type="number" id="plan-input-${plan.id}-premium" class="form-input health-plan-input" data-plan-id="${plan.id}" data-field="monthlyPremium" value="${plan.monthlyPremium}" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="plan-input-${plan.id}-deductible">Annual Deductible (${sym}) <span class="jargon" data-term="Deductible">ⓘ</span></label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">${sym}</span>
+                                <input type="number" id="plan-input-${plan.id}-deductible" class="form-input health-plan-input" data-plan-id="${plan.id}" data-field="annualDeductible" value="${plan.annualDeductible}" min="0" step="1000">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="plan-input-${plan.id}-copay">Co-pay Share (%) <span class="jargon" data-term="Co-pay / Co-insurance">ⓘ</span></label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">%</span>
+                                <input type="number" id="plan-input-${plan.id}-copay" class="form-input health-plan-input" data-plan-id="${plan.id}" data-field="copayPercent" value="${plan.copayPercent}" min="0" max="100" step="1">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="plan-input-${plan.id}-oop">Out-of-Pocket Max (${sym}) <span class="jargon" data-term="Out-of-Pocket Maximum">ⓘ</span></label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">${sym}</span>
+                                <input type="number" id="plan-input-${plan.id}-oop" class="form-input health-plan-input" data-plan-id="${plan.id}" data-field="outOfPocketMax" value="${plan.outOfPocketMax}" min="0" step="1000">
+                            </div>
+                        </div>
                     </div>
-                    <div class="plan-stat">
-                        <span>Annual Deductible:</span>
-                        <span class="plan-stat-val">${sym}${plan.annualDeductible.toLocaleString()}</span>
-                    </div>
-                    <div class="plan-stat">
-                        <span>Co-pay Share:</span>
-                        <span class="plan-stat-val">${plan.copayPercent}%</span>
-                    </div>
-                    <div class="plan-stat">
-                        <span>Out-of-Pocket Max:</span>
-                        <span class="plan-stat-val">${sym}${plan.outOfPocketMax.toLocaleString()}</span>
-                    </div>
-                    <div class="plan-stat" style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border-subtle);">
-                        <span>Worst-Case Annual Cost:</span>
-                        <span class="plan-stat-val" style="color:var(--accent-red);">${sym}${worstCaseCost.toLocaleString()}/yr</span>
+
+                    <!-- Validation Error Message Display -->
+                    <div class="plan-validation-msg margin-top-sm" id="val-msg-${plan.id}" style="display:none; color:var(--accent-red); font-size:0.82rem; font-weight:600;"></div>
+
+                    <!-- Calculated Summaries -->
+                    <div class="plan-stats-summary margin-top-md" style="padding-top:12px; border-top:1px dashed var(--border-subtle);">
+                        <div class="plan-stat">
+                            <span>Annual Premium (12 mos):</span>
+                            <span class="plan-stat-val" id="calc-premium-${plan.id}" style="color:var(--accent-amber);">${sym}${annualPremium.toLocaleString()}/yr</span>
+                        </div>
+                        <div class="plan-stat" style="margin-top:6px;">
+                            <span>Worst-Case Annual Cost:</span>
+                            <span class="plan-stat-val" id="calc-worst-${plan.id}" style="color:var(--accent-red);">${sym}${worstCaseCost.toLocaleString()}/yr</span>
+                        </div>
                     </div>
                 </div>
             `;
         });
 
         elements.healthPlansContainer.innerHTML = html;
+        attachHealthInputListeners();
         renderScenarioResults();
+    }
+
+    function attachHealthInputListeners() {
+        const inputs = elements.healthPlansContainer.querySelectorAll('.health-plan-input');
+        const sym = state.currencySymbols[state.targetCurrency] || '₹';
+
+        inputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const planId = e.target.dataset.planId;
+                const field = e.target.dataset.field;
+                const val = parseFloat(e.target.value);
+                const valMsg = document.getElementById(`val-msg-${planId}`);
+
+                const plan = state.healthPlans.find(p => p.id === planId);
+                if (!plan) return;
+
+                let isValid = true;
+                let errorText = '';
+
+                if (isNaN(val)) {
+                    isValid = false;
+                    errorText = '⚠️ Please enter a valid number.';
+                } else if (field === 'monthlyPremium' && val < 0) {
+                    isValid = false;
+                    errorText = '⚠️ Monthly Premium must be 0 or greater.';
+                } else if (field === 'annualDeductible' && val < 0) {
+                    isValid = false;
+                    errorText = '⚠️ Annual Deductible must be 0 or greater.';
+                } else if (field === 'outOfPocketMax' && val < 0) {
+                    isValid = false;
+                    errorText = '⚠️ Out-of-Pocket Maximum must be 0 or greater.';
+                } else if (field === 'copayPercent' && (val < 0 || val > 100)) {
+                    isValid = false;
+                    errorText = '⚠️ Co-pay percentage must be between 0% and 100%.';
+                }
+
+                if (!isValid) {
+                    if (valMsg) {
+                        valMsg.textContent = errorText;
+                        valMsg.style.display = 'block';
+                    }
+                    e.target.style.borderColor = 'var(--accent-red)';
+                    return;
+                }
+
+                if (valMsg) {
+                    valMsg.style.display = 'none';
+                }
+                e.target.style.borderColor = '';
+
+                // Update state
+                plan[field] = val;
+
+                // Recalculate card highlights
+                const annualPremium = (plan.monthlyPremium || 0) * 12;
+                const worstCaseCost = annualPremium + (plan.outOfPocketMax || 0);
+
+                const premiumDisplay = document.getElementById(`calc-premium-${planId}`);
+                const worstDisplay = document.getElementById(`calc-worst-${planId}`);
+
+                if (premiumDisplay) premiumDisplay.textContent = `${sym}${annualPremium.toLocaleString()}/yr`;
+                if (worstDisplay) worstDisplay.textContent = `${sym}${worstCaseCost.toLocaleString()}/yr`;
+
+                // Recalculate scenario stress test results
+                renderScenarioResults();
+            });
+        });
     }
 
     function renderScenarioResults() {
@@ -851,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let html = '';
         state.healthPlans.forEach(plan => {
-            const annualPremium = plan.monthlyPremium * 12;
+            const annualPremium = (plan.monthlyPremium || 0) * 12;
             let medicalBill = 0;
             if (sc === 'healthy') medicalBill = 2000;
             if (sc === 'moderate') medicalBill = 25000;
@@ -859,9 +957,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let outOfPocketPaid = 0;
             if (medicalBill > 0) {
-                const afterDeductible = Math.max(0, medicalBill - plan.annualDeductible);
-                const copayPaid = afterDeductible * (plan.copayPercent / 100);
-                outOfPocketPaid = Math.min(plan.outOfPocketMax, Math.min(medicalBill, plan.annualDeductible) + copayPaid);
+                const annualDeductible = plan.annualDeductible || 0;
+                const copayPercent = plan.copayPercent || 0;
+                const outOfPocketMax = plan.outOfPocketMax || 0;
+
+                const afterDeductible = Math.max(0, medicalBill - annualDeductible);
+                const copayPaid = afterDeductible * (copayPercent / 100);
+                outOfPocketPaid = Math.min(outOfPocketMax, Math.min(medicalBill, annualDeductible) + copayPaid);
             }
 
             const totalAnnualImpact = annualPremium + outOfPocketPaid;
