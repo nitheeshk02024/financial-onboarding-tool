@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Environment & Secret Files
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Build & Scratch
+dist/
+build/
+scratch/
+.tmp/
