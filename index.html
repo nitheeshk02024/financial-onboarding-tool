@@ -113,15 +113,28 @@
         <!-- Custom Offer Letter Modal / Drawer -->
         <div class="parser-drawer glass-card" id="parser-drawer" style="display: none;">
             <div class="drawer-header">
-                <h3>Paste Your Employment Offer Letter or Pay Slip</h3>
+                <h3>Upload or Paste Your Employment Offer Letter or Pay Slip</h3>
                 <button type="button" id="close-drawer-btn" class="close-btn">✕</button>
             </div>
-            <p class="drawer-sub">Our AI ingestion engine automatically extracts CTC, Basic Salary, Allowances, PF, and Medical Premiums into your financial matrix.</p>
-            <textarea id="offer-text-input" class="form-textarea" rows="4" placeholder="Paste offer text here... e.g. 'Annual CTC: ₹ 12,00,000. Basic Salary: ₹ 6,00,000 (50%). House Rent Allowance: ₹ 2,40,000. Employee Provident Fund: ₹ 72,000. Performance Bonus: ₹ 1,00,000'"></textarea>
-            <div class="drawer-actions">
-                <button type="button" class="btn-secondary" id="clear-offer-text">Clear Text</button>
-                <button type="button" class="btn-primary" id="run-parse-btn">✨ Ingest & Populate Fields</button>
+            <p class="drawer-sub">Our backend analysis engine extracts CTC, Basic Salary, Allowances, PF, Medical Premiums, and key contract terms into your financial matrix.</p>
+            
+            <div class="form-group margin-top-sm">
+                <label for="offer-file-input">📄 Upload Document File (PDF, DOCX, TXT):</label>
+                <input type="file" id="offer-file-input" class="form-input" accept=".pdf,.docx,.txt">
             </div>
+
+            <div class="form-group margin-top-sm">
+                <label for="offer-text-input">Or paste offer text here:</label>
+                <textarea id="offer-text-input" class="form-textarea" rows="3" placeholder="Paste offer text here... e.g. 'Annual CTC: ₹ 12,00,000. Basic Salary: ₹ 6,00,000. House Rent Allowance: ₹ 2,40,000. Designation: Software Engineer'"></textarea>
+            </div>
+
+            <div class="drawer-actions margin-top-md">
+                <button type="button" class="btn-secondary" id="clear-offer-text">Clear</button>
+                <button type="button" class="btn-primary" id="run-parse-btn">✨ Analyze & Populate Fields</button>
+            </div>
+
+            <!-- Analysis Results Container -->
+            <div id="document-analysis-results" class="margin-top-md" style="display: none; border-top: 1px dashed var(--border-subtle); padding-top: 14px;"></div>
         </div>
     </section>
 

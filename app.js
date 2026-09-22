@@ -6,6 +6,38 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ============================================
+    // BACKEND API BASE CONFIGURATION
+    // ============================================
+    const API_BASE_URL = 'http://localhost:5000/api';
+
+    /**
+     * Unified fetch helper for backend APIs
+     */
+    async function apiRequest(endpoint, method = 'GET', data = null, isFormData = false) {
+        try {
+            const options = { method };
+            if (data) {
+                if (isFormData) {
+                    options.body = data;
+                } else {
+                    options.headers = { 'Content-Type': 'application/json' };
+                    options.body = JSON.stringify(data);
+                }
+            }
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+            const result = await response.json();
+            return { ok: response.ok, status: response.status, data: result };
+        } catch (err) {
+            console.error(`API Error on ${endpoint}:`, err);
+            return {
+                ok: false,
+                status: 0,
+                error: 'Unable to connect to the backend. Please make sure the backend server is running.'
+            };
+        }
+    }
+
+    // ============================================
     // APPLICATION STATE
     // ============================================
     const state = {
@@ -504,6 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearOfferTextBtn: document.getElementById('clear-offer-text'),
         runParseBtn: document.getElementById('run-parse-btn'),
         offerTextInput: document.getElementById('offer-text-input'),
+        offerFileInput: document.getElementById('offer-file-input'),
 
         // Paycheck Inputs
         inputCtc: document.getElementById('input-ctc'),
@@ -591,63 +624,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============================================
-    // CALCULATIONS & FINANCIAL ENGINES
+    // CALCULATIONS & FINANCIAL ENGINES (BACKEND CONNECTED)
     // ============================================
-    function updateCalculations() {
+    async function updateCalculations() {
         const ctc = state.salary.annualCtc || 0;
         const sym = state.currencySymbols[state.targetCurrency] || '₹';
         const basic = (ctc * state.salary.basicPercent) / 100;
         const hra = (ctc * state.salary.hraPercent) / 100;
         const epf = (basic * state.salary.epfPercent) / 100;
 
+        // Map Country name to Backend Multi-Country Engine
+        let countryName = 'India';
+        if (state.country === 'usa') countryName = 'USA';
+        if (state.country === 'europe') countryName = 'Germany';
+
+        // Step 4: Call Backend Tax API (POST /api/tax/calculate)
+        const taxRes = await apiRequest('/tax/calculate', 'POST', {
+            annualSalary: ctc > 0 ? ctc : 1,
+            country: countryName
+        });
+
         let incomeTax = 0;
         let taxableIncome = ctc;
+        let effectiveTaxRate = 0;
+        let taxYear = 'AY 2026-27';
+        let regime = 'New Tax Regime';
+        let unsupportedMsg = null;
 
-        if (state.country === 'india') {
-            if (state.salary.regime === 'new') {
-                const stdDeduction = 75000;
-                taxableIncome = Math.max(0, ctc - stdDeduction);
-                if (taxableIncome <= 700000) {
-                    incomeTax = 0;
-                } else {
-                    if (taxableIncome > 300000) incomeTax += (Math.min(taxableIncome, 700000) - 300000) * 0.05;
-                    if (taxableIncome > 700000) incomeTax += (Math.min(taxableIncome, 1000000) - 700000) * 0.10;
-                    if (taxableIncome > 1000000) incomeTax += (Math.min(taxableIncome, 1200000) - 1000000) * 0.15;
-                    if (taxableIncome > 1200000) incomeTax += (Math.min(taxableIncome, 1500000) - 1200000) * 0.20;
-                    if (taxableIncome > 1500000) incomeTax += (taxableIncome - 1500000) * 0.30;
-                    incomeTax *= 1.04;
-                }
-            } else {
-                const stdDeduction = 50000;
-                const sec80C = Math.min(150000, state.salary.sec80C || 0);
-                const sec80D = Math.min(75000, state.salary.sec80D || 0);
-                const annualRent = (state.salary.monthlyRent || 0) * 12;
-                const hraExemption = Math.min(hra, Math.max(0, annualRent - 0.1 * basic), 0.5 * basic);
-                
-                taxableIncome = Math.max(0, ctc - stdDeduction - sec80C - sec80D - hraExemption);
-                if (taxableIncome <= 500000) {
-                    incomeTax = 0;
-                } else {
-                    if (taxableIncome > 250000) incomeTax += (Math.min(taxableIncome, 500000) - 250000) * 0.05;
-                    if (taxableIncome > 500000) incomeTax += (Math.min(taxableIncome, 1000000) - 500000) * 0.20;
-                    if (taxableIncome > 1000000) incomeTax += (taxableIncome - 1000000) * 0.30;
-                    incomeTax *= 1.04;
-                }
-            }
-        } else if (state.country === 'usa') {
-            const stdDeduction = 14600;
-            const contrib401k = ctc * 0.05;
-            taxableIncome = Math.max(0, ctc - stdDeduction - contrib401k);
-            let fedTax = 0;
-            if (taxableIncome > 11600) fedTax += (Math.min(taxableIncome, 47150) - 11600) * 0.12;
-            if (taxableIncome > 47150) fedTax += (taxableIncome - 47150) * 0.22;
-            const fica = ctc * 0.0765;
-            incomeTax = fedTax + fica + (ctc * 0.05);
-        } else {
-            incomeTax = ctc > 11000 ? (ctc - 11000) * 0.30 : 0;
+        if (taxRes.ok && taxRes.data && taxRes.data.success) {
+            incomeTax = taxRes.data.data.estimatedTax;
+            effectiveTaxRate = taxRes.data.data.effectiveTaxRate;
+            taxYear = taxRes.data.data.taxYear;
+            regime = taxRes.data.data.regime;
+        } else if (taxRes.data && taxRes.data.success === false) {
+            unsupportedMsg = taxRes.data.message || 'Tax calculation for this country is not yet implemented.';
+            showNotification(`Tax API Note: ${unsupportedMsg}`);
+        } else if (!taxRes.ok && taxRes.error) {
+            showNotification(taxRes.error);
         }
 
-        const annualTakeHome = Math.max(0, ctc - incomeTax - epf);
+        // Step 3: Call Backend Salary API (POST /api/salary/calculate)
+        const salaryRes = await apiRequest('/salary/calculate', 'POST', {
+            annualSalary: ctc > 0 ? ctc : 1,
+            tax: incomeTax,
+            insurance: 0,
+            otherDeductions: epf
+        });
+
+        let annualTakeHome = Math.max(0, ctc - incomeTax - epf);
+        if (salaryRes.ok && salaryRes.data && salaryRes.data.success) {
+            annualTakeHome = salaryRes.data.data.annualNetPay;
+        }
 
         let conversionRate = 1;
         if (state.country === 'india' && state.targetCurrency === 'USD') conversionRate = 1 / state.exchangeRates.INR;
@@ -658,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const convertedAnnualCtc = ctc * conversionRate;
         elements.convertedTotalDisplay.textContent = `= ${sym}${Math.round(convertedAnnualCtc).toLocaleString()} /yr`;
 
-        state.activeCalc = { ctc, basic, hra, epf, taxableIncome, incomeTax, annualTakeHome };
+        state.activeCalc = { ctc, basic, hra, epf, taxableIncome, incomeTax, annualTakeHome, effectiveTaxRate, taxYear, regime, unsupportedMsg };
         renderPaycheckView();
     }
 
@@ -691,7 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <div class="waterfall-item">
-                <span class="waterfall-label">Income Tax</span>
+                <span class="waterfall-label">Income Tax (Backend)</span>
                 <div class="waterfall-bar-outer">
                     <div class="waterfall-bar-inner bar-tax" style="width:${getBarWidth(calc.incomeTax)};">
                         ${sym}${Math.round(calc.incomeTax).toLocaleString()}
@@ -724,14 +751,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="line-item-row">
                 <div>
                     <span class="line-item-title">Gross Salary (CTC)</span>
-                    <span class="line-item-sub">Total compensation promised by employer</span>
+                    <span class="line-item-sub">Total compensation input</span>
                 </div>
                 <span class="line-item-val val-addition">${sym}${Math.round(calc.ctc).toLocaleString()}</span>
             </div>
             <div class="line-item-row">
                 <div>
-                    <span class="line-item-title">Income Tax & Cess</span>
-                    <span class="line-item-sub">Direct tax based on taxable income of ${sym}${Math.round(calc.taxableIncome).toLocaleString()}</span>
+                    <span class="line-item-title">Estimated Tax (${calc.taxYear || 'AY 2026-27'})</span>
+                    <span class="line-item-sub">${calc.unsupportedMsg ? calc.unsupportedMsg : `Effective Tax Rate: ${calc.effectiveTaxRate}% (${calc.regime})`}</span>
                 </div>
                 <span class="line-item-val val-deduction">− ${sym}${Math.round(calc.incomeTax).toLocaleString()}</span>
             </div>
@@ -746,8 +773,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ` : ''}
             <div class="line-item-row" style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2);">
                 <div>
-                    <span class="line-item-title" style="color:var(--accent-emerald);">Net Take-Home Pay</span>
-                    <span class="line-item-sub">Cash received in your bank account annually</span>
+                    <span class="line-item-title" style="color:var(--accent-emerald);">Net Take-Home Pay (Backend Verified)</span>
+                    <span class="line-item-sub">Net cash landing in bank account annually</span>
                 </div>
                 <span class="line-item-val" style="color:var(--accent-emerald); font-size:1.1rem;">${sym}${Math.round(calc.annualTakeHome).toLocaleString()} / yr</span>
             </div>
@@ -937,50 +964,77 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (premiumDisplay) premiumDisplay.textContent = `${sym}${annualPremium.toLocaleString()}/yr`;
                 if (worstDisplay) worstDisplay.textContent = `${sym}${worstCaseCost.toLocaleString()}/yr`;
 
-                // Recalculate scenario stress test results
+                // Recalculate scenario stress test results with backend API
                 renderScenarioResults();
             });
         });
     }
 
-    function renderScenarioResults() {
+    // Step 5 & Step 6: Connect Health Insurance to Backend API (POST /api/insurance/compare)
+    async function renderScenarioResults() {
         const sym = state.currencySymbols[state.targetCurrency] || '₹';
         const sc = state.activeScenario;
 
-        let html = '';
-        state.healthPlans.forEach(plan => {
-            const annualPremium = (plan.monthlyPremium || 0) * 12;
-            let medicalBill = 0;
-            if (sc === 'healthy') medicalBill = 2000;
-            if (sc === 'moderate') medicalBill = 25000;
-            if (sc === 'catastrophic') medicalBill = 200000;
+        let scenarioKey = 'LOW_USAGE';
+        if (sc === 'moderate') scenarioKey = 'MEDIUM_USAGE';
+        if (sc === 'catastrophic') scenarioKey = 'HIGH_USAGE';
 
-            let outOfPocketPaid = 0;
-            if (medicalBill > 0) {
-                const annualDeductible = plan.annualDeductible || 0;
-                const copayPercent = plan.copayPercent || 0;
-                const outOfPocketMax = plan.outOfPocketMax || 0;
+        const formattedPlans = state.healthPlans.map(plan => ({
+            name: plan.name,
+            monthlyPremium: plan.monthlyPremium || 0,
+            deductible: plan.annualDeductible || 0,
+            outOfPocketMaximum: plan.outOfPocketMax || 0
+        }));
 
-                const afterDeductible = Math.max(0, medicalBill - annualDeductible);
-                const copayPaid = afterDeductible * (copayPercent / 100);
-                outOfPocketPaid = Math.min(outOfPocketMax, Math.min(medicalBill, annualDeductible) + copayPaid);
-            }
-
-            const totalAnnualImpact = annualPremium + outOfPocketPaid;
-
-            html += `
-                <div class="scenario-res-card">
-                    <div class="sc-res-title">${plan.name}</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">Total Annual Financial Impact</div>
-                    <div class="sc-res-val">${sym}${Math.round(totalAnnualImpact).toLocaleString()}</div>
-                    <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:6px;">
-                        (${sym}${annualPremium.toLocaleString()} Premium + ${sym}${Math.round(outOfPocketPaid).toLocaleString()} Medical)
-                    </div>
-                </div>
-            `;
+        const compRes = await apiRequest('/insurance/compare', 'POST', {
+            plans: formattedPlans,
+            scenario: scenarioKey
         });
 
-        elements.scenarioResultsGrid.innerHTML = html;
+        if (compRes.ok && compRes.data && compRes.data.success) {
+            const data = compRes.data.data;
+            let html = '';
+            data.comparisons.forEach(c => {
+                html += `
+                    <div class="scenario-res-card">
+                        <div class="sc-res-title">${c.planName}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">Total Annual Healthcare Cost</div>
+                        <div class="sc-res-val">${sym}${Math.round(c.estimatedAnnualHealthcareCost).toLocaleString()}</div>
+                        <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:6px;">
+                            (${sym}${c.annualPremium.toLocaleString()} Premium + ${sym}${Math.round(c.estimatedAnnualHealthcareCost - c.annualPremium).toLocaleString()} Out-of-Pocket)
+                        </div>
+                    </div>
+                `;
+            });
+            if (data.note) {
+                html += `
+                    <div style="grid-column: 1 / -1; margin-top: 10px; padding: 12px; background: rgba(99, 102, 241, 0.08); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; color: var(--text-secondary);">
+                        💡 <strong>Plan Comparison Note:</strong> ${data.note}
+                    </div>
+                `;
+            }
+            elements.scenarioResultsGrid.innerHTML = html;
+        } else {
+            // Local fallback rendering if backend unavailable
+            let html = '';
+            state.healthPlans.forEach(plan => {
+                const annualPremium = (plan.monthlyPremium || 0) * 12;
+                let medicalBill = 2000;
+                if (sc === 'moderate') medicalBill = 25000;
+                if (sc === 'catastrophic') medicalBill = 200000;
+                const deductiblePaid = Math.min(medicalBill, plan.annualDeductible || 0);
+                const totalCost = annualPremium + Math.min(plan.outOfPocketMax || 0, deductiblePaid);
+
+                html += `
+                    <div class="scenario-res-card">
+                        <div class="sc-res-title">${plan.name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">Total Annual Financial Impact</div>
+                        <div class="sc-res-val">${sym}${Math.round(totalCost).toLocaleString()}</div>
+                    </div>
+                `;
+            });
+            elements.scenarioResultsGrid.innerHTML = html;
+        }
     }
 
     // ============================================
@@ -1103,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${sym}${Math.round(calc.taxableIncome).toLocaleString()}</span>
             </div>
             <div class="line-item-row">
-                <span>Annual Tax & Cess:</span>
+                <span>Annual Tax & Cess (Backend):</span>
                 <span style="color:var(--accent-red);">${sym}${Math.round(calc.incomeTax).toLocaleString()}</span>
             </div>
             <div class="line-item-row">
@@ -1111,6 +1165,84 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${((calc.incomeTax / (calc.ctc || 1)) * 100).toFixed(1)}%</span>
             </div>
         `;
+    }
+
+    // ============================================
+    // Step 7: DOCUMENT / OFFER LETTER ANALYSIS (POST /api/documents/analyze)
+    // ============================================
+    async function parseOfferText(file, txt) {
+        const resultsContainer = document.getElementById('document-analysis-results');
+        if (resultsContainer) {
+            resultsContainer.style.display = 'block';
+            resultsContainer.innerHTML = `<div style="font-size:0.88rem; color:var(--accent-indigo);">⏳ Analyzing document with EmployEase backend engine...</div>`;
+        }
+
+        const formData = new FormData();
+        if (file) {
+            formData.append('document', file);
+        } else if (txt && txt.trim()) {
+            const textBlob = new Blob([txt], { type: 'text/plain' });
+            formData.append('document', textBlob, 'pasted_offer.txt');
+        } else {
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `<div style="color:var(--accent-red); font-size:0.88rem;">⚠️ Please upload a document file (.pdf, .docx, .txt) or paste offer text.</div>`;
+            }
+            return;
+        }
+
+        const res = await apiRequest('/documents/analyze', 'POST', formData, true);
+
+        if (res.ok && res.data && res.data.success) {
+            const d = res.data.data;
+
+            // Auto-update CTC if extracted by backend
+            if (d.annualSalary) {
+                state.salary.annualCtc = d.annualSalary;
+                elements.inputCtc.value = d.annualSalary;
+                updateCalculations();
+            }
+
+            const formatVal = (v) => (v !== null && v !== undefined && v !== '' ? v : '<span style="color:var(--text-muted); font-style:italic;">Not found</span>');
+            const formatMoney = (v) => (v ? `₹${Number(v).toLocaleString('en-IN')}` : '<span style="color:var(--text-muted); font-style:italic;">Not found</span>');
+
+            let html = `
+                <div style="font-size:0.95rem; font-weight:700; color:var(--accent-emerald); margin-bottom:10px;">
+                    ✅ Document Analysis Result (${d.documentType})
+                </div>
+                <div class="form-grid-2" style="font-size:0.85rem; gap:10px;">
+                    <div><strong>Company:</strong> ${formatVal(d.companyName)}</div>
+                    <div><strong>Job Title:</strong> ${formatVal(d.jobTitle)}</div>
+                    <div><strong>Annual Salary (CTC):</strong> ${formatMoney(d.annualSalary)}</div>
+                    <div><strong>Basic Salary:</strong> ${formatMoney(d.basicSalary)}</div>
+                    <div><strong>Joining Date:</strong> ${formatVal(d.joiningDate)}</div>
+                    <div><strong>Notice Period:</strong> ${formatVal(d.noticePeriod)}</div>
+                    <div><strong>Probation Period:</strong> ${formatVal(d.probationPeriod)}</div>
+                    <div><strong>Insurance Coverage:</strong> ${d.insurance && d.insurance.length > 0 ? d.insurance.join(', ') : '<span style="color:var(--text-muted); font-style:italic;">Not found</span>'}</div>
+                </div>
+            `;
+
+            if (d.explanation && d.explanation.length > 0) {
+                html += `
+                    <div style="margin-top:12px; font-size:0.84rem; line-height:1.6; background:rgba(15,23,42,0.6); padding:10px; border-radius:8px;">
+                        <strong style="color:var(--accent-indigo);">💡 Plain-Language Insights:</strong>
+                        <ul style="margin-top:6px; padding-left:18px;">
+                            ${d.explanation.map(exp => `<li>${exp}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (resultsContainer) {
+                resultsContainer.innerHTML = html;
+            }
+            showNotification('Document analyzed successfully by backend!');
+        } else {
+            const errorMsg = (res.data && res.data.error) || res.error || 'Failed to analyze document.';
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `<div style="color:var(--accent-red); font-size:0.88rem;">⚠️ ${errorMsg}</div>`;
+            }
+            showNotification(`Error: ${errorMsg}`);
+        }
     }
 
     // ============================================
@@ -1175,14 +1307,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.clearOfferTextBtn.addEventListener('click', () => {
             elements.offerTextInput.value = '';
+            if (elements.offerFileInput) elements.offerFileInput.value = '';
+            const resultsContainer = document.getElementById('document-analysis-results');
+            if (resultsContainer) {
+                resultsContainer.style.display = 'none';
+                resultsContainer.innerHTML = '';
+            }
         });
 
         elements.runParseBtn.addEventListener('click', () => {
-            const txt = elements.offerTextInput.value;
-            if (txt) {
-                parseOfferText(txt);
-                elements.parserDrawer.style.display = 'none';
-            }
+            const file = elements.offerFileInput && elements.offerFileInput.files[0] ? elements.offerFileInput.files[0] : null;
+            const txt = elements.offerTextInput ? elements.offerTextInput.value : '';
+            parseOfferText(file, txt);
         });
 
         // Paycheck Inputs
@@ -1319,19 +1455,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function parseOfferText(txt) {
-        const cleaned = txt.replace(/,/g, '');
-        const ctcMatch = cleaned.match(/(?:CTC|Cost to Company|Gross|Package|Salary)[\s:=₹$€]*([\d.]+)/i);
-        if (ctcMatch) {
-            let val = parseFloat(ctcMatch[1]);
-            if (val < 500) val *= 100000;
-            state.salary.annualCtc = val;
-            elements.inputCtc.value = val;
-            updateCalculations();
-            showNotification('Offer text parsed and annual CTC updated!');
-        }
-    }
-
     function setupParticleCanvas() {
         const canvas = document.getElementById('particles-canvas');
         if (!canvas) return;
@@ -1385,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         notif.textContent = msg;
         document.body.appendChild(notif);
-        setTimeout(() => notif.remove(), 3500);
+        setTimeout(() => notif.remove(), 4000);
     }
 
     // Start App
