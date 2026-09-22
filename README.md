@@ -38,36 +38,43 @@ Navigating early employment paperwork, choosing health insurance plans (high-ded
 4. **Offer Letter Ingestion Engine**:
    - **Sample Contract Loader**: Pre-loaded with real-world offer presets (*India Tech Offer ₹15L*, *India Fresher ₹6.5L*, *US Software Engineer $95k*, *EU Developer €62k*).
    - **Custom Offer Parser**: Text area drawer for pasting raw offer text with automatic regex field extraction.
+5. **Node.js & Express REST Backend**:
+   - Modular Express API with CORS support, SQLite storage, database schema initialization, middleware input validation, and `/api/health` status monitoring.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Core Structure**: HTML5 Semantic Elements
-- **Styling**: Vanilla CSS3 (Custom Design Tokens, Dark Glassmorphism, CSS Grid & Flexbox, Smooth Transitions)
-- **Logic & Calculations**: Modern JavaScript (ES6+, Event-driven Architecture, Regex Ingestion Engine)
-- **Visual Graphics**: HTML5 2D Canvas API (Animated Donut Chart Ring & Particle Physics System)
+- **Frontend**: HTML5, Vanilla CSS3 (Dark Glassmorphism, CSS Grid/Flexbox), JavaScript ES6+, HTML5 2D Canvas API
+- **Backend API**: Node.js, Express.js, CORS, dotenv
+- **Database Storage**: SQLite (`sqlite3`)
 
 ---
 
 ## 🚀 How to Run the Project Locally
 
-No external build tools, bundlers, or server dependencies are required.
+### 1. Running the Frontend
+- Simply open `index.html` in your web browser, or serve it locally:
+  ```bash
+  npx serve -p 8080 .
+  ```
+- Access Frontend UI at `http://localhost:8080`.
 
-### Quick Start
-1. **Clone the repository**:
+### 2. Running the Backend Server
+1. Navigate to the `backend` directory:
    ```bash
-   git clone https://github.com/nitheesh02024/financial-onboarding-tool.git
-   cd financial-onboarding-tool
+   cd backend
    ```
-
-2. **Open in Browser**:
-   - Simply double-click `index.html` to open it directly in your web browser.
-   - Alternatively, launch a local HTTP server using Node.js:
-     ```bash
-     npx serve -p 8080 .
-     ```
-   - Open `http://localhost:8080` in Chrome, Firefox, Safari, or Edge.
+2. Install Node.js dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Express server:
+   ```bash
+   npm start
+   ```
+4. Verify backend health endpoint by opening:
+   `http://localhost:5000/api/health`
 
 ---
 
@@ -75,11 +82,34 @@ No external build tools, bundlers, or server dependencies are required.
 
 ```
 financial-onboarding-tool/
-├── index.html        # Main HTML5 structure and tabbed navigation matrix
-├── styles.css        # Glassmorphism design system, typography, and responsive styles
-├── app.js            # Core JavaScript application engine, tax calculators, and jargon search
-├── .gitignore        # Version control exclusions
-└── README.md         # Project documentation & collaborator attribution
+├── index.html            # Main HTML5 structure and tabbed navigation matrix
+├── styles.css            # Glassmorphism design system and responsive styles
+├── app.js                # Core JavaScript application engine
+├── backend/              # Node.js Express REST Backend
+│   ├── server.js         # Express server entry point & /api/health endpoint
+│   ├── package.json      # Backend package dependencies
+│   ├── .env.example      # Environment variables template
+│   ├── .gitignore        # Backend git exclusions
+│   ├── config/
+│   │   └── database.js   # SQLite database connection & schema init
+│   ├── routes/
+│   │   ├── salaryRoutes.js
+│   │   ├── insuranceRoutes.js
+│   │   └── documentRoutes.js
+│   ├── controllers/
+│   │   ├── salaryController.js
+│   │   ├── insuranceController.js
+│   │   └── documentController.js
+│   ├── services/
+│   │   ├── salaryService.js
+│   │   ├── taxService.js
+│   │   ├── insuranceService.js
+│   │   └── documentService.js
+│   ├── middleware/
+│   │   └── validation.js
+│   └── uploads/          # Uploaded document storage
+├── .gitignore            # Root repository git exclusions
+└── README.md             # Project documentation & attribution
 ```
 
 ---
