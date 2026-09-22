@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
     // BACKEND API BASE CONFIGURATION
     // ============================================
-    const API_BASE_URL = 'http://localhost:5000/api';
+    const API_BASE_URL = 'https://financial-onboarding-tool.onrender.com/api';
 
     /**
      * Unified fetch helper for backend APIs
