@@ -8,3 +8,18 @@ exports.getAllSalaries = () => {
         });
     });
 };
+
+exports.calculateUserSalary = ({ annualSalary, tax, insurance, otherDeductions }) => {
+    const totalDeductions = tax + insurance + otherDeductions;
+    const annualNetPay = annualSalary - totalDeductions;
+    const monthlyGrossPay = annualSalary / 12;
+    const monthlyNetPay = annualNetPay / 12;
+
+    return {
+        annualSalary,
+        totalDeductions,
+        annualNetPay,
+        monthlyGrossPay,
+        monthlyNetPay
+    };
+};

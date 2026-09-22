@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { extractTextFromBuffer, parseDocumentText } = require('../utils/documentParser');
 
 exports.getAllDocuments = () => {
     return new Promise((resolve, reject) => {
@@ -7,4 +8,17 @@ exports.getAllDocuments = () => {
             else resolve(rows);
         });
     });
+};
+
+/**
+ * Analyzes an uploaded employment document buffer
+ */
+exports.analyzeDocument = async ({ buffer, originalname, mimetype }) => {
+    const rawText = await extractTextFromBuffer(buffer, originalname, mimetype);
+    const parsedData = parseDocumentText(rawText);
+
+    return {
+        success: true,
+        data: parsedData
+    };
 };

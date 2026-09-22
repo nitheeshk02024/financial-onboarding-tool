@@ -9,6 +9,7 @@ dotenv.config();
 const db = require('./config/database');
 
 const salaryRoutes = require('./routes/salaryRoutes');
+const taxRoutes = require('./routes/taxRoutes');
 const insuranceRoutes = require('./routes/insuranceRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 
@@ -30,6 +31,7 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/salary', salaryRoutes);
+app.use('/api/tax', taxRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use('/api/documents', documentRoutes);
 
