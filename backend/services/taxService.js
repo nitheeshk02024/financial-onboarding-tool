@@ -16,7 +16,7 @@ exports.calculateTax = async ({ annualSalary, country }) => {
     if (!country || typeof country !== 'string') {
         return {
             success: false,
-            message: "Tax calculation for this country is not yet implemented."
+            message: "Country is required."
         };
     }
 
@@ -32,19 +32,35 @@ exports.calculateTax = async ({ annualSalary, country }) => {
     }
 
     if (resolvedCountry === taxConfig.SUPPORTED_COUNTRIES.USA) {
-        return calculateUsaTax();
+        const data = calculateUsaTax(annualSalary);
+        return {
+            success: true,
+            data
+        };
     }
 
     if (resolvedCountry === taxConfig.SUPPORTED_COUNTRIES.UK) {
-        return calculateUkTax();
+        const data = calculateUkTax(annualSalary);
+        return {
+            success: true,
+            data
+        };
     }
 
     if (resolvedCountry === taxConfig.SUPPORTED_COUNTRIES.CANADA) {
-        return calculateCanadaTax();
+        const data = calculateCanadaTax(annualSalary);
+        return {
+            success: true,
+            data
+        };
     }
 
     if (resolvedCountry === taxConfig.SUPPORTED_COUNTRIES.GERMANY) {
-        return calculateGermanyTax();
+        const data = calculateGermanyTax(annualSalary);
+        return {
+            success: true,
+            data
+        };
     }
 
     return {

@@ -51,7 +51,10 @@ exports.calculateIndiaTax = (annualSalary) => {
         estimatedTax,
         effectiveTaxRate,
         annualNetAfterTax,
+        estimatedAnnualNetAfterTax: annualNetAfterTax,
         taxYear: config.taxYear,
-        regime: config.regime
+        regime: config.regime,
+        assumptions: config.assumptions,
+        disclaimer: config.disclaimer
     };
 };
