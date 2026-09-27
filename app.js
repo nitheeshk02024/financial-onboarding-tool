@@ -771,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="line-item-val val-deduction">− ${sym}${Math.round(calc.epf).toLocaleString()}</span>
             </div>
             ` : ''}
-            <div class="line-item-row" style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2);">
+            <div class="line-item-row" style="background:rgba(5,150,105,0.08); border:1px solid rgba(5,150,105,0.2);">
                 <div>
                     <span class="line-item-title" style="color:var(--accent-emerald);">Net Take-Home Pay (Backend Verified)</span>
                     <span class="line-item-sub">Net cash landing in bank account annually</span>
@@ -793,9 +793,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const innerRadius = radius - 30;
 
         const data = [
-            { label: 'In-Hand Pay', value: takeHome, color: '#10b981' },
-            { label: 'Income Tax', value: tax, color: '#ef4444' },
-            { label: 'Retirement (PF)', value: pf, color: '#8b5cf6' }
+            { label: 'In-Hand Pay', value: takeHome, color: '#059669' },
+            { label: 'Income Tax', value: tax, color: '#dc2626' },
+            { label: 'Retirement (PF)', value: pf, color: '#1e40af' }
         ].filter(d => d.value > 0);
 
         const total = data.reduce((acc, d) => acc + d.value, 0) || 1;
@@ -1008,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (data.note) {
                 html += `
-                    <div style="grid-column: 1 / -1; margin-top: 10px; padding: 12px; background: rgba(99, 102, 241, 0.08); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; color: var(--text-secondary);">
+                    <div style="grid-column: 1 / -1; margin-top: 10px; padding: 12px; background: rgba(37, 99, 235, 0.08); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; color: var(--text-secondary);">
                         💡 <strong>Plan Comparison Note:</strong> ${data.note}
                     </div>
                 `;
@@ -1223,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (d.explanation && d.explanation.length > 0) {
                 html += `
-                    <div style="margin-top:12px; font-size:0.84rem; line-height:1.6; background:rgba(15,23,42,0.6); padding:10px; border-radius:8px;">
+                    <div style="margin-top:12px; font-size:0.84rem; line-height:1.6; background:rgba(10,18,32,0.6); padding:10px; border-radius:8px;">
                         <strong style="color:var(--accent-indigo);">💡 Plain-Language Insights:</strong>
                         <ul style="margin-top:6px; padding-left:18px;">
                             ${d.explanation.map(exp => `<li>${exp}</li>`).join('')}
@@ -1501,7 +1501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const notif = document.createElement('div');
         notif.style.cssText = `
             position: fixed; bottom: 30px; right: 30px; z-index: 10000;
-            background: rgba(15, 23, 42, 0.95); border: 1px solid var(--accent-indigo);
+            background: rgba(10, 18, 32, 0.95); border: 1px solid var(--accent-indigo);
             color: white; padding: 12px 20px; border-radius: 12px; font-size: 0.88rem;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
             animation: fadeInUp 0.3s ease-out;
