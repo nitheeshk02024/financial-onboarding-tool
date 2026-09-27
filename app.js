@@ -669,6 +669,10 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStateFromLocalStorage();
         initTheme();
         setupEventListeners();
+<<<<<<< HEAD
+=======
+        // Floating particle background animation removed for a cleaner, more professional look.
+>>>>>>> d3e0e6a6b7e7789ed1ababa1c1397070febbb0f9
         renderJargonGrid(JARGON_DATABASE);
         renderChecklist();
         renderInvestmentGuide();
@@ -1075,6 +1079,133 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const getBarWidth = (val) => `${Math.max(4, Math.min(100, (val / (calc.ctc || 1)) * 100)).toFixed(1)}%`;
+<<<<<<< HEAD
+=======
+        elements.waterfallChart.innerHTML = `
+            <div class="waterfall-item">
+                <span class="waterfall-label">Gross CTC</span>
+                <div class="waterfall-bar-outer">
+                    <div class="waterfall-bar-inner bar-gross" style="width:100%;">
+                        ${sym}${Math.round(calc.ctc).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+            <div class="waterfall-item">
+                <span class="waterfall-label">Income Tax (Backend)</span>
+                <div class="waterfall-bar-outer">
+                    <div class="waterfall-bar-inner bar-tax" style="width:${getBarWidth(calc.incomeTax)};">
+                        ${sym}${Math.round(calc.incomeTax).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+            ${calc.epf > 0 ? `
+            <div class="waterfall-item">
+                <span class="waterfall-label">Provident Fund</span>
+                <div class="waterfall-bar-outer">
+                    <div class="waterfall-bar-inner bar-pf" style="width:${getBarWidth(calc.epf)};">
+                        ${sym}${Math.round(calc.epf).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+            <div class="waterfall-item">
+                <span class="waterfall-label">Net Take-Home</span>
+                <div class="waterfall-bar-outer">
+                    <div class="waterfall-bar-inner bar-net" style="width:${getBarWidth(calc.annualTakeHome)};">
+                        ${sym}${Math.round(calc.annualTakeHome).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        renderDonutChart(calc.annualTakeHome, calc.incomeTax, calc.epf, calc.ctc);
+
+        elements.lineItemsList.innerHTML = `
+            <div class="line-item-row">
+                <div>
+                    <span class="line-item-title">Gross Salary (CTC)</span>
+                    <span class="line-item-sub">Total compensation input</span>
+                </div>
+                <span class="line-item-val val-addition">${sym}${Math.round(calc.ctc).toLocaleString()}</span>
+            </div>
+            <div class="line-item-row">
+                <div>
+                    <span class="line-item-title">Estimated Tax (${calc.taxYear || 'AY 2026-27'})</span>
+                    <span class="line-item-sub">${calc.unsupportedMsg ? calc.unsupportedMsg : `Effective Tax Rate: ${calc.effectiveTaxRate}% (${calc.regime})`}</span>
+                </div>
+                <span class="line-item-val val-deduction">− ${sym}${Math.round(calc.incomeTax).toLocaleString()}</span>
+            </div>
+            ${calc.epf > 0 ? `
+            <div class="line-item-row">
+                <div>
+                    <span class="line-item-title">Provident Fund (EPF)</span>
+                    <span class="line-item-sub">Mandatory 12% basic salary saved in your retirement account</span>
+                </div>
+                <span class="line-item-val val-deduction">− ${sym}${Math.round(calc.epf).toLocaleString()}</span>
+            </div>
+            ` : ''}
+            <div class="line-item-row" style="background:rgba(180,83,9,0.08); border:1px solid rgba(180,83,9,0.2);">
+                <div>
+                    <span class="line-item-title" style="color:var(--accent-emerald);">Net Take-Home Pay (Backend Verified)</span>
+                    <span class="line-item-sub">Net cash landing in bank account annually</span>
+                </div>
+                <span class="line-item-val" style="color:var(--accent-emerald); font-size:1.1rem;">${sym}${Math.round(calc.annualTakeHome).toLocaleString()} / yr</span>
+            </div>
+        `;
+    }
+
+    function renderDonutChart(takeHome, tax, pf, ctc) {
+        const canvas = elements.donutChart;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = Math.min(width, height) / 2 - 10;
+        const innerRadius = radius - 30;
+
+        const data = [
+            { label: 'In-Hand Pay', value: takeHome, color: '#E0C58F' },
+            { label: 'Income Tax', value: tax, color: '#b3564a' },
+            { label: 'Retirement (PF)', value: pf, color: '#112250' }
+        ].filter(d => d.value > 0);
+
+        const total = data.reduce((acc, d) => acc + d.value, 0) || 1;
+        ctx.clearRect(0, 0, width, height);
+
+        let startAngle = -Math.PI / 2;
+        data.forEach(slice => {
+            const sliceAngle = (slice.value / total) * (Math.PI * 2);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+            ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true);
+            ctx.closePath();
+            ctx.fillStyle = slice.color;
+            ctx.fill();
+            startAngle += sliceAngle;
+        });
+
+        const pct = Math.round((takeHome / total) * 100);
+        elements.donutCenter.innerHTML = `
+            <div style="font-size:1.4rem; color:var(--accent-emerald);">${pct}%</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">In-Hand</div>
+        `;
+
+        elements.donutLegend.innerHTML = data.map(d => `
+            <div class="legend-item">
+                <span class="legend-dot" style="background:${d.color}"></span>
+                <span>${d.label}: ${Math.round((d.value / total) * 100)}%</span>
+            </div>
+        `).join('');
+    }
+
+    // ============================================
+    // HEALTH MATRIX RENDERER (USER EDITABLE INPUTS)
+    // ============================================
+    function renderHealthView() {
+        const sym = state.currencySymbols[state.targetCurrency] || '₹';
+>>>>>>> d3e0e6a6b7e7789ed1ababa1c1397070febbb0f9
         
         if (elements.waterfallChart) {
             elements.waterfallChart.innerHTML = `
@@ -1609,12 +1740,110 @@ document.addEventListener('DOMContentLoaded', () => {
             const annualPremiums = plan.monthlyPremium * 12;
             let outOfPocketMed = 0;
 
+<<<<<<< HEAD
             if (medicalCost <= plan.annualDeductible) {
                 outOfPocketMed = medicalCost;
             } else {
                 const afterDeductible = medicalCost - plan.annualDeductible;
                 const coinsurance = afterDeductible * (plan.copayPercent / 100);
                 outOfPocketMed = Math.min(plan.outOfPocketMax, plan.annualDeductible + coinsurance);
+=======
+                let isValid = true;
+                let errorText = '';
+
+                if (isNaN(val)) {
+                    isValid = false;
+                    errorText = '⚠️ Please enter a valid number.';
+                } else if (field === 'monthlyPremium' && val < 0) {
+                    isValid = false;
+                    errorText = '⚠️ Monthly Premium must be 0 or greater.';
+                } else if (field === 'annualDeductible' && val < 0) {
+                    isValid = false;
+                    errorText = '⚠️ Annual Deductible must be 0 or greater.';
+                } else if (field === 'outOfPocketMax' && val < 0) {
+                    isValid = false;
+                    errorText = '⚠️ Out-of-Pocket Maximum must be 0 or greater.';
+                } else if (field === 'copayPercent' && (val < 0 || val > 100)) {
+                    isValid = false;
+                    errorText = '⚠️ Co-pay percentage must be between 0% and 100%.';
+                }
+
+                if (!isValid) {
+                    if (valMsg) {
+                        valMsg.textContent = errorText;
+                        valMsg.style.display = 'block';
+                    }
+                    e.target.style.borderColor = 'var(--accent-red)';
+                    return;
+                }
+
+                if (valMsg) {
+                    valMsg.style.display = 'none';
+                }
+                e.target.style.borderColor = '';
+
+                // Update state
+                plan[field] = val;
+
+                // Recalculate card highlights
+                const annualPremium = (plan.monthlyPremium || 0) * 12;
+                const worstCaseCost = annualPremium + (plan.outOfPocketMax || 0);
+
+                const premiumDisplay = document.getElementById(`calc-premium-${planId}`);
+                const worstDisplay = document.getElementById(`calc-worst-${planId}`);
+
+                if (premiumDisplay) premiumDisplay.textContent = `${sym}${annualPremium.toLocaleString()}/yr`;
+                if (worstDisplay) worstDisplay.textContent = `${sym}${worstCaseCost.toLocaleString()}/yr`;
+
+                // Recalculate scenario stress test results with backend API
+                renderScenarioResults();
+            });
+        });
+    }
+
+    // Step 5 & Step 6: Connect Health Insurance to Backend API (POST /api/insurance/compare)
+    async function renderScenarioResults() {
+        const sym = state.currencySymbols[state.targetCurrency] || '₹';
+        const sc = state.activeScenario;
+
+        let scenarioKey = 'LOW_USAGE';
+        if (sc === 'moderate') scenarioKey = 'MEDIUM_USAGE';
+        if (sc === 'catastrophic') scenarioKey = 'HIGH_USAGE';
+
+        const formattedPlans = state.healthPlans.map(plan => ({
+            name: plan.name,
+            monthlyPremium: plan.monthlyPremium || 0,
+            deductible: plan.annualDeductible || 0,
+            outOfPocketMaximum: plan.outOfPocketMax || 0
+        }));
+
+        const compRes = await apiRequest('/insurance/compare', 'POST', {
+            plans: formattedPlans,
+            scenario: scenarioKey
+        });
+
+        if (compRes.ok && compRes.data && compRes.data.success) {
+            const data = compRes.data.data;
+            let html = '';
+            data.comparisons.forEach(c => {
+                html += `
+                    <div class="scenario-res-card">
+                        <div class="sc-res-title">${c.planName}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:6px;">Total Annual Healthcare Cost</div>
+                        <div class="sc-res-val">${sym}${Math.round(c.estimatedAnnualHealthcareCost).toLocaleString()}</div>
+                        <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:6px;">
+                            (${sym}${c.annualPremium.toLocaleString()} Premium + ${sym}${Math.round(c.estimatedAnnualHealthcareCost - c.annualPremium).toLocaleString()} Out-of-Pocket)
+                        </div>
+                    </div>
+                `;
+            });
+            if (data.note) {
+                html += `
+                    <div style="grid-column: 1 / -1; margin-top: 10px; padding: 12px; background: rgba(37, 99, 235, 0.08); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; color: var(--text-secondary);">
+                        💡 <strong>Plan Comparison Note:</strong> ${data.note}
+                    </div>
+                `;
+>>>>>>> d3e0e6a6b7e7789ed1ababa1c1397070febbb0f9
             }
 
             const totalAnnualCost = annualPremiums + outOfPocketMed;
@@ -1951,6 +2180,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     ⚡ Your Paycheck Calculator has been automatically updated with these figures!
                 </div>
             `;
+<<<<<<< HEAD
+=======
+
+            if (d.explanation && d.explanation.length > 0) {
+                html += `
+                    <div style="margin-top:12px; font-size:0.84rem; line-height:1.6; background:rgba(10,18,32,0.6); padding:10px; border-radius:8px;">
+                        <strong style="color:var(--accent-indigo);">💡 Plain-Language Insights:</strong>
+                        <ul style="margin-top:6px; padding-left:18px;">
+                            ${d.explanation.map(exp => `<li>${exp}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (resultsContainer) {
+                resultsContainer.innerHTML = html;
+            }
+            showNotification('Document analyzed successfully by backend!');
+        } else {
+            const errorMsg = (res.data && res.data.error) || res.error || 'Failed to analyze document.';
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `<div style="color:var(--accent-red); font-size:0.88rem;">⚠️ ${errorMsg}</div>`;
+            }
+            showNotification(`Error: ${errorMsg}`);
+>>>>>>> d3e0e6a6b7e7789ed1ababa1c1397070febbb0f9
         }
         showNotification('Offer letter parsed and populated into matrix!');
     }
@@ -2333,6 +2587,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+<<<<<<< HEAD
     // Launch Application
+=======
+    function showNotification(msg) {
+        const notif = document.createElement('div');
+        notif.style.cssText = `
+            position: fixed; bottom: 30px; right: 30px; z-index: 10000;
+            background: rgba(10, 18, 32, 0.95); border: 1px solid var(--accent-indigo);
+            color: white; padding: 12px 20px; border-radius: 12px; font-size: 0.88rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            animation: fadeInUp 0.3s ease-out;
+        `;
+        notif.textContent = msg;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 4000);
+    }
+
+    // Start App
+>>>>>>> d3e0e6a6b7e7789ed1ababa1c1397070febbb0f9
     init();
 });
