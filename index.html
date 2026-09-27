@@ -1,29 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EmployEase — AI Onboarding Matrix & Paycheck Decoder</title>
-    <meta name="description" content="Interactive decision-tree onboarding tool that translates offer letters, tax regimes, and health insurance plans into plain English.">
+    <title>EmployEase — First-Time Earner Financial Matrix & Onboarding Decoder</title>
+    <meta name="description" content="Interactive onboarding and financial decision tool for first-time earners. Compare offer letters, decode taxes, track onboarding documents, and optimize take-home pay.">
+    <meta name="color-scheme" content="dark light">
+    
+    <!-- Instant Theme Loader (Prevents FOUC) -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('employease_theme');
+                if (savedTheme) {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- Animated Background Orbs -->
+    <!-- Animated Ambient Background Lines & Grid -->
     <div class="bg-animation" aria-hidden="true">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
         <div class="orb orb-3"></div>
         <div class="orb orb-4"></div>
-        <div class="orb orb-5"></div>
         <div class="grid-overlay"></div>
+        <div class="circuit-lines"></div>
     </div>
-
-    <!-- Interactive Particle Canvas -->
-    <canvas id="particles-canvas" aria-hidden="true"></canvas>
 
     <!-- Top Navigation Bar -->
     <header class="top-nav">
@@ -31,54 +44,92 @@
             <!-- Brand Logo -->
             <div class="brand">
                 <span class="brand-icon">⚡</span>
-                <span class="brand-text">Employ<span class="brand-accent">Ease</span></span>
-                <span class="brand-badge">AI Onboarding Matrix</span>
-            </div>
-
-            <!-- Tax Standard Region Selector -->
-            <div class="standard-selector">
-                <span class="selector-label">🌐 Standard:</span>
-                <div class="country-pills">
-                    <button type="button" class="country-pill active" data-country="india">
-                        <span>🇮🇳 India (₹ CTC)</span>
-                    </button>
-                    <button type="button" class="country-pill" data-country="usa">
-                        <span>🇺🇸 US Standard ($)</span>
-                    </button>
-                    <button type="button" class="country-pill" data-country="europe">
-                        <span>🇪🇺 UK & EU (€/£)</span>
-                    </button>
+                <div class="brand-info">
+                    <span class="brand-text">Employ<span class="brand-accent">Ease</span></span>
+                    <span class="brand-badge">First-Time Earner Matrix</span>
                 </div>
             </div>
 
-            <!-- Live Currency Converter -->
-            <div class="currency-converter-badge">
-                <span class="converter-label">⇄ Convert to:</span>
-                <select id="currency-select" class="currency-dropdown">
-                    <option value="INR" selected>INR (₹)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                </select>
-                <span id="converted-total-display" class="converted-val">= ₹0 /yr</span>
+            <!-- Header Controls & Region Selector -->
+            <div class="nav-controls">
+                <!-- Standard Region Selector -->
+                <div class="standard-selector">
+                    <span class="selector-label">🌐 Region:</span>
+                    <div class="country-pills" role="tablist">
+                        <button type="button" class="country-pill active" data-country="india">
+                            <span>🇮🇳 India (₹)</span>
+                        </button>
+                        <button type="button" class="country-pill" data-country="usa">
+                            <span>🇺🇸 US ($)</span>
+                        </button>
+                        <button type="button" class="country-pill" data-country="europe">
+                            <span>🇪🇺 UK/EU (€/£)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Currency Converter Dropdown -->
+                <div class="currency-converter-badge">
+                    <span class="converter-label">⇄ Convert:</span>
+                    <select id="currency-select" class="currency-dropdown" aria-label="Target Currency">
+                        <option value="INR" selected>INR (₹)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                    </select>
+                    <span id="converted-total-display" class="converted-val">= ₹0 /yr</span>
+                </div>
+
+                <!-- Auto-Save Status Badge -->
+                <div class="autosave-status" id="autosave-status" title="Data saved automatically in your browser">
+                    <span class="pulse-dot"></span>
+                    <span class="autosave-text" id="autosave-text">Saved</span>
+                </div>
+
+                <!-- Dark / Light Theme Switcher -->
+                <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark/light theme" title="Switch Theme (Light / Dark)">
+                    <span class="theme-icon" id="theme-icon">☀️</span>
+                    <span class="theme-label" id="theme-label">Light</span>
+                </button>
+
+                <!-- Reset Inputs Button -->
+                <button type="button" class="btn-ghost-sm" id="reset-state-btn" title="Reset all custom inputs to initial sample values">
+                    ↺ Reset
+                </button>
             </div>
         </div>
+        <!-- Decorative Header Bottom Glowing Line -->
+        <div class="header-glow-line"></div>
     </header>
 
     <!-- Main Navigation Tabs Bar -->
-    <nav class="main-tabs-nav">
+    <nav class="main-tabs-nav" aria-label="Main Navigation">
         <div class="tabs-container">
             <button type="button" class="tab-btn active" data-tab="wizard">
                 <span class="tab-icon">🧭</span>
-                <span class="tab-text">Guided Wizard</span>
+                <span class="tab-text">Assessment</span>
             </button>
             <button type="button" class="tab-btn" data-tab="paycheck">
                 <span class="tab-icon">💰</span>
                 <span class="tab-text">Paycheck & In-Hand</span>
             </button>
+            <button type="button" class="tab-btn" data-tab="compare">
+                <span class="tab-icon">⚖️</span>
+                <span class="tab-text">Compare Offers</span>
+                <span class="tab-pill-badge">New</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="checklist">
+                <span class="tab-icon">📝</span>
+                <span class="tab-text">Document Checklist</span>
+                <span class="tab-pill-badge tab-pill-count" id="nav-checklist-count">0/14</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="investment">
+                <span class="tab-icon">🌱</span>
+                <span class="tab-text">80C Tax Guide</span>
+            </button>
             <button type="button" class="tab-btn" data-tab="health">
                 <span class="tab-icon">🛡️</span>
-                <span class="tab-text">Health Plan Matrix</span>
+                <span class="tab-text">Health Plans</span>
             </button>
             <button type="button" class="tab-btn" data-tab="jargon">
                 <span class="tab-icon">📖</span>
@@ -86,7 +137,7 @@
             </button>
             <button type="button" class="tab-btn" data-tab="executive">
                 <span class="tab-icon">📋</span>
-                <span class="tab-text">Executive Summary</span>
+                <span class="tab-text">Executive Report</span>
             </button>
         </div>
     </nav>
@@ -95,7 +146,7 @@
     <section class="ingestion-bar">
         <div class="ingestion-container">
             <div class="sample-offer-group">
-                <label for="sample-offer-select">📥 Load Sample Offer:</label>
+                <label for="sample-offer-select">📥 Quick Presets:</label>
                 <select id="sample-offer-select" class="form-select inline-select">
                     <option value="">-- Choose Sample Contract --</option>
                     <option value="india-sde">🇮🇳 India Tech Offer — ₹15,00,000 CTC</option>
@@ -105,36 +156,41 @@
                 </select>
             </div>
             
-            <button type="button" class="btn-ingest" id="toggle-parser-btn">
-                <span class="btn-icon">📄</span> Parse Custom Offer Letter
-            </button>
+            <div class="ingestion-actions">
+                <button type="button" class="btn-ingest" id="toggle-parser-btn">
+                    <span class="btn-icon">📄</span> Parse Offer Letter / Slip
+                </button>
+            </div>
         </div>
 
         <!-- Custom Offer Letter Modal / Drawer -->
         <div class="parser-drawer glass-card" id="parser-drawer" style="display: none;">
             <div class="drawer-header">
-                <h3>Upload or Paste Your Employment Offer Letter or Pay Slip</h3>
-                <button type="button" id="close-drawer-btn" class="close-btn">✕</button>
+                <div>
+                    <h3>📄 Offer Letter & Pay Slip Ingestion Engine</h3>
+                    <p class="drawer-sub">Paste offer text or upload a document to automatically extract CTC, Basic, HRA, PF, and statutory clauses.</p>
+                </div>
+                <button type="button" id="close-drawer-btn" class="close-btn" aria-label="Close Drawer">✕</button>
             </div>
-            <p class="drawer-sub">Our backend analysis engine extracts CTC, Basic Salary, Allowances, PF, Medical Premiums, and key contract terms into your financial matrix.</p>
             
-            <div class="form-group margin-top-sm">
-                <label for="offer-file-input">📄 Upload Document File (PDF, DOCX, TXT):</label>
-                <input type="file" id="offer-file-input" class="form-input" accept=".pdf,.docx,.txt">
-            </div>
-
-            <div class="form-group margin-top-sm">
-                <label for="offer-text-input">Or paste offer text here:</label>
-                <textarea id="offer-text-input" class="form-textarea" rows="3" placeholder="Paste offer text here... e.g. 'Annual CTC: ₹ 12,00,000. Basic Salary: ₹ 6,00,000. House Rent Allowance: ₹ 2,40,000. Designation: Software Engineer'"></textarea>
+            <div class="form-grid-2 margin-top-sm">
+                <div class="form-group">
+                    <label for="offer-file-input">📎 Upload Document (.pdf, .docx, .txt):</label>
+                    <input type="file" id="offer-file-input" class="form-input" accept=".pdf,.docx,.txt">
+                </div>
+                <div class="form-group">
+                    <label for="offer-text-input">Or paste offer excerpt:</label>
+                    <textarea id="offer-text-input" class="form-textarea" rows="3" placeholder="e.g. 'Annual CTC: ₹ 14,00,000. Basic Salary: ₹ 7,00,000. HRA: ₹ 2,80,000. Designation: Software Engineer. Notice Period: 60 days.'"></textarea>
+                </div>
             </div>
 
             <div class="drawer-actions margin-top-md">
                 <button type="button" class="btn-secondary" id="clear-offer-text">Clear</button>
-                <button type="button" class="btn-primary" id="run-parse-btn">✨ Analyze & Populate Fields</button>
+                <button type="button" class="btn-primary" id="run-parse-btn">✨ Analyze & Populate Matrix</button>
             </div>
 
             <!-- Analysis Results Container -->
-            <div id="document-analysis-results" class="margin-top-md" style="display: none; border-top: 1px dashed var(--border-subtle); padding-top: 14px;"></div>
+            <div id="document-analysis-results" class="margin-top-md" style="display: none;"></div>
         </div>
     </section>
 
@@ -142,38 +198,70 @@
     <main id="main-content" class="app-content">
 
         <!-- ============================================
-             TAB 1: GUIDED WIZARD
+             TAB 1: GUIDED WIZARD ASSESSMENT
              ============================================ -->
         <section class="tab-view active" id="view-wizard">
             <div class="view-hero">
-                <h1 class="hero-title">First-Time Earner <span class="gradient-text">Onboarding Wizard</span></h1>
-                <p class="hero-sub">Answer 4 quick questions to decode your best tax regime, insurance strategy, and paycheck optimization.</p>
+                <div class="hero-tag">STEP-BY-STEP ADVISOR</div>
+                <h1 class="hero-title">First-Time Earner <span class="gradient-text">Onboarding Assessment</span></h1>
+                <p class="hero-sub">Answer 4 essential questions to decode the optimal tax regime, insurance strategy, and maximize your actual net take-home pay.</p>
             </div>
 
-            <div class="wizard-container glass-card">
+            <!-- Wizard Step Stepper Lines -->
+            <div class="wizard-stepper">
+                <div class="step-node active" data-step-indicator="1">
+                    <div class="step-num">1</div>
+                    <span class="step-text">Salary</span>
+                </div>
+                <div class="step-line" id="line-1-2"></div>
+                <div class="step-node" data-step-indicator="2">
+                    <div class="step-num">2</div>
+                    <span class="step-text">Rent & HRA</span>
+                </div>
+                <div class="step-line" id="line-2-3"></div>
+                <div class="step-node" data-step-indicator="3">
+                    <div class="step-num">3</div>
+                    <span class="step-text">Health Risk</span>
+                </div>
+                <div class="step-line" id="line-3-4"></div>
+                <div class="step-node" data-step-indicator="4">
+                    <div class="step-num">4</div>
+                    <span class="step-text">Custom Plan</span>
+                </div>
+            </div>
+
+            <div class="wizard-container glass-card margin-top-lg">
                 <!-- Step 1: Salary Entry -->
                 <div class="wizard-card active" data-wizard-step="1">
-                    <div class="wizard-step-badge">Step 1 of 4</div>
-                    <h2 class="wizard-heading">Enter Your Annual Compensation</h2>
-                    <p class="wizard-sub">100% user-specified — zero hardcoded base salaries.</p>
+                    <div class="wizard-step-header">
+                        <span class="wizard-step-badge">Step 1 of 4</span>
+                        <h2 class="wizard-heading">Enter Your Annual Cost to Company (CTC)</h2>
+                        <p class="wizard-sub">100% user-specified — zero hardcoded salaries. Your CTC is the total package offered by your employer.</p>
+                    </div>
                     
                     <div class="form-group margin-top-lg">
-                        <label for="wizard-ctc">Annual Cost to Company (CTC) / Gross Income <span class="jargon" data-term="CTC">ⓘ</span></label>
+                        <label for="wizard-ctc">Annual CTC / Gross Income <span class="jargon" data-term="CTC">ⓘ</span></label>
                         <div class="input-with-prefix">
                             <span class="input-prefix" id="wizard-curr-symbol">₹</span>
-                            <input type="number" id="wizard-ctc" class="form-input large-input" placeholder="e.g. 1200000" min="0">
+                            <input type="number" id="wizard-ctc" class="form-input large-input" placeholder="e.g. 1200000" min="0" value="1200000">
                         </div>
+                        <div class="input-hint">Default preset: ₹12,00,000 (~12 LPA typical for early-career tech/corporate roles)</div>
                     </div>
 
                     <div class="wizard-actions">
-                        <button type="button" class="btn-primary wizard-next" data-next="2">Next: Tax Regime & Rent →</button>
+                        <button type="button" class="btn-primary wizard-next" data-next="2">
+                            Next: Rent & Housing Exemptions →
+                        </button>
                     </div>
                 </div>
 
                 <!-- Step 2: Rent & Tax Deductions -->
                 <div class="wizard-card" data-wizard-step="2">
-                    <div class="wizard-step-badge">Step 2 of 4</div>
-                    <h2 class="wizard-heading">Housing & Tax Deductions</h2>
+                    <div class="wizard-step-header">
+                        <span class="wizard-step-badge">Step 2 of 4</span>
+                        <h2 class="wizard-heading">Housing & Rent Allowance (HRA)</h2>
+                        <p class="wizard-sub">Rent payments directly impact whether the Old Tax Regime or New Tax Regime yields more money in your pocket.</p>
+                    </div>
                     
                     <div class="form-grid margin-top-lg">
                         <div class="form-group">
@@ -181,21 +269,22 @@
                             <div class="toggle-group">
                                 <label class="toggle-option">
                                     <input type="radio" name="wiz-rent" value="yes" checked>
-                                    <span class="toggle-label">Yes, paying rent</span>
+                                    <span class="toggle-label">🏢 Yes, paying monthly rent</span>
                                 </label>
                                 <label class="toggle-option">
                                     <input type="radio" name="wiz-rent" value="no">
-                                    <span class="toggle-label">No, living in own home</span>
+                                    <span class="toggle-label">🏠 No, living in own home</span>
                                 </label>
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="wiz-monthly-rent">Monthly Rent Amount</label>
+                        <div class="form-group" id="wiz-rent-amount-group">
+                            <label for="wiz-monthly-rent">Monthly Rent Paid</label>
                             <div class="input-with-prefix">
                                 <span class="input-prefix" id="wiz-rent-symbol">₹</span>
                                 <input type="number" id="wiz-monthly-rent" class="form-input" placeholder="e.g. 18000" value="18000">
                             </div>
+                            <div class="input-hint">Used to evaluate HRA tax exemptions under Section 10(13A).</div>
                         </div>
                     </div>
 
@@ -207,24 +296,36 @@
 
                 <!-- Step 3: Medical Risk -->
                 <div class="wizard-card" data-wizard-step="3">
-                    <div class="wizard-step-badge">Step 3 of 4</div>
-                    <h2 class="wizard-heading">Medical Usage & Health Strategy</h2>
+                    <div class="wizard-step-header">
+                        <span class="wizard-step-badge">Step 3 of 4</span>
+                        <h2 class="wizard-heading">Medical Usage & Health Strategy</h2>
+                        <p class="wizard-sub">Helps identify whether a High-Deductible Health Plan (HDHP) or a Comprehensive PPO saves you more annual cash.</p>
+                    </div>
                     
                     <div class="form-grid margin-top-lg">
                         <div class="form-group">
-                            <label>How frequently do you visit doctors or purchase prescription medications?</label>
-                            <div class="toggle-group">
+                            <label>Select your anticipated medical care usage profile:</label>
+                            <div class="toggle-group vertical-toggles">
                                 <label class="toggle-option">
                                     <input type="radio" name="wiz-health" value="low" checked>
-                                    <span class="toggle-label">Rarely (Healthy, annual checkups only)</span>
+                                    <span class="toggle-label text-left">
+                                        <strong>🟢 Low / Preventive Care</strong>
+                                        <small>Healthy, annual checkups only, rarely visit clinics or specialists.</small>
+                                    </span>
                                 </label>
                                 <label class="toggle-option">
                                     <input type="radio" name="wiz-health" value="moderate">
-                                    <span class="toggle-label">Moderate (Quarterly visits / ongoing prescriptions)</span>
+                                    <span class="toggle-label text-left">
+                                        <strong>🟡 Moderate Care</strong>
+                                        <small>Quarterly doctor visits, ongoing prescription drugs, or minor physiotherapy.</small>
+                                    </span>
                                 </label>
                                 <label class="toggle-option">
                                     <input type="radio" name="wiz-health" value="high">
-                                    <span class="toggle-label">High (Frequent care / dependents with conditions)</span>
+                                    <span class="toggle-label text-left">
+                                        <strong>🔴 High / Dependent Care</strong>
+                                        <small>Regular medical consultations, chronic conditions, or dependent parents.</small>
+                                    </span>
                                 </label>
                             </div>
                         </div>
@@ -232,14 +333,17 @@
 
                     <div class="wizard-actions">
                         <button type="button" class="btn-secondary wizard-prev" data-prev="2">← Back</button>
-                        <button type="button" class="btn-primary wizard-next" data-next="4">View Personalized Recommendation →</button>
+                        <button type="button" class="btn-primary wizard-next" data-next="4">Generate Custom Strategy →</button>
                     </div>
                 </div>
 
                 <!-- Step 4: Summary Recommendation -->
                 <div class="wizard-card" data-wizard-step="4">
-                    <div class="wizard-step-badge">Step 4 of 4</div>
-                    <h2 class="wizard-heading">Your Custom Onboarding Plan</h2>
+                    <div class="wizard-step-header">
+                        <span class="wizard-step-badge">Step 4 of 4</span>
+                        <h2 class="wizard-heading">Your Custom First-Year Financial Strategy</h2>
+                        <p class="wizard-sub">Generated from your compensation, rent expenditure, and risk tolerance profile.</p>
+                    </div>
                     
                     <div class="recommendation-box glass-card margin-top-lg" id="wizard-recommendation-box">
                         <!-- Populated dynamically -->
@@ -247,20 +351,23 @@
 
                     <div class="wizard-actions">
                         <button type="button" class="btn-secondary wizard-prev" data-prev="3">← Back</button>
-                        <button type="button" class="btn-primary" id="apply-wizard-btn">🚀 Apply Plan to Matrix & Paycheck</button>
+                        <button type="button" class="btn-primary" id="apply-wizard-btn">🚀 Apply Strategy to Paycheck Engine</button>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- ============================================
-             TAB 2: PAYCHECK & IN-HAND
+             TAB 2: PAYCHECK & IN-HAND ENGINE
              ============================================ -->
         <section class="tab-view" id="view-paycheck">
             <!-- Hero Net Pay Header -->
-            <div class="paycheck-hero glass-card">
+            <div class="paycheck-hero glass-card shimmer-line">
                 <div class="paycheck-hero-main">
-                    <div class="badge-status">ESTIMATED NET TAKE-HOME PAY</div>
+                    <div class="badge-status">
+                        <span class="pulse-dot"></span>
+                        ESTIMATED NET TAKE-HOME PAY
+                    </div>
                     <div class="hero-amount" id="paycheck-amount">—</div>
                     <div class="hero-subtitle" id="paycheck-subtitle">Actual net cash landing in your checking account</div>
                     
@@ -278,7 +385,10 @@
             <div class="paycheck-layout margin-top-xl">
                 <!-- Left Input Panel -->
                 <div class="glass-card panel-inputs">
-                    <h3 class="panel-title">⚙️ Financial Inputs & Component Breakdown</h3>
+                    <div class="panel-header-line">
+                        <h3 class="panel-title">⚙️ Salary Structure & Deductions</h3>
+                        <span class="badge-subtle">Fully Configurable</span>
+                    </div>
                     
                     <div class="form-grid margin-top-md">
                         <div class="form-group">
@@ -296,6 +406,7 @@
                                     <span class="input-prefix">%</span>
                                     <input type="number" id="input-basic-pct" class="form-input" value="50" min="10" max="100">
                                 </div>
+                                <div class="input-hint">Typically 40%–50% of CTC</div>
                             </div>
 
                             <div class="form-group">
@@ -304,17 +415,18 @@
                                     <span class="input-prefix">%</span>
                                     <input type="number" id="input-hra-pct" class="form-input" value="20" min="0" max="100">
                                 </div>
+                                <div class="input-hint">Typically 20%–40% of CTC</div>
                             </div>
                         </div>
 
-                        <!-- Country Specific Options -->
+                        <!-- Country Specific Options (India) -->
                         <div id="india-specific-inputs">
                             <div class="form-group margin-top-md">
                                 <label>Tax Regime Choice <span class="jargon" data-term="New Tax Regime">ⓘ</span></label>
                                 <div class="toggle-group">
                                     <label class="toggle-option">
                                         <input type="radio" name="calc-regime" value="new" checked>
-                                        <span class="toggle-label">New Regime (FY 25-26)</span>
+                                        <span class="toggle-label">New Regime (FY 25-26 Default)</span>
                                     </label>
                                     <label class="toggle-option">
                                         <input type="radio" name="calc-regime" value="old">
@@ -323,7 +435,8 @@
                                 </div>
                             </div>
 
-                            <div id="old-regime-subinputs" style="display:none;" class="margin-top-md">
+                            <div id="old-regime-subinputs" style="display:none;" class="margin-top-md regime-box">
+                                <div class="regime-box-title">Old Regime Deductions Setup:</div>
                                 <div class="form-grid-2">
                                     <div class="form-group">
                                         <label for="input-80c">Section 80C (<span id="symbol-80c">₹</span>) <span class="jargon" data-term="80C">ⓘ</span></label>
@@ -338,6 +451,11 @@
                                     <label for="input-monthly-rent">Monthly Rent Paid (<span id="symbol-rent">₹</span>)</label>
                                     <input type="number" id="input-monthly-rent" class="form-input" placeholder="e.g. 18000" value="18000">
                                 </div>
+                                <div class="margin-top-sm">
+                                    <button type="button" class="btn-ghost-sm" id="jump-to-tax-guide-btn">
+                                        🌱 Open 80C Investment Starter Guide
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -345,14 +463,17 @@
 
                 <!-- Right Visual Output Panel -->
                 <div class="glass-card panel-outputs">
-                    <h3 class="panel-title">📊 Salary Waterfall & Breakdown</h3>
+                    <div class="panel-header-line">
+                        <h3 class="panel-title">📊 Salary Waterfall & Net Distribution</h3>
+                        <span class="badge-subtle" id="tax-regime-display">AY 2026-27</span>
+                    </div>
                     
                     <!-- Waterfall Chart -->
                     <div class="waterfall-container margin-top-md" id="waterfall-chart"></div>
 
-                    <!-- Donut Chart -->
+                    <!-- Donut Chart & Distribution -->
                     <div class="chart-section margin-top-xl">
-                        <h4>Where Your CTC Goes</h4>
+                        <h4>Allocation of Your Gross Package</h4>
                         <div class="donut-wrapper">
                             <canvas id="donut-chart" width="240" height="240"></canvas>
                             <div class="donut-center-text" id="donut-center"></div>
@@ -362,7 +483,7 @@
 
                     <!-- Itemized Line Items -->
                     <div class="line-items-section margin-top-xl">
-                        <h4>Line Items Explained in Simple Terms</h4>
+                        <h4>Paycheck Line Items Demystified</h4>
                         <div class="line-items-list" id="line-items-list"></div>
                     </div>
                 </div>
@@ -370,12 +491,336 @@
         </section>
 
         <!-- ============================================
-             TAB 3: HEALTH PLAN MATRIX
+             TAB 3: OFFER COMPARISON MODE (NEW FEATURE)
+             ============================================ -->
+        <section class="tab-view" id="view-compare">
+            <div class="view-hero">
+                <div class="hero-tag">HEAD-TO-HEAD MATRIX</div>
+                <h1 class="hero-title">Job Offer <span class="gradient-text">Comparison Engine</span></h1>
+                <p class="hero-sub">Compare two employment offers side-by-side. Uncover hidden variables, tax differences, and calculate your true monthly net in-hand pay.</p>
+            </div>
+
+            <!-- Quick Preset Buttons for Offers -->
+            <div class="compare-presets-bar margin-top-md">
+                <span class="preset-label">⚡ Load Scenarios:</span>
+                <button type="button" class="preset-pill-btn active" id="load-compare-tech-vs-startup">
+                    Tech Giant (₹15L) vs High-Growth Startup (₹18L)
+                </button>
+                <button type="button" class="preset-pill-btn" id="load-compare-fresher-metro-vs-remote">
+                    Fresher Metro (₹7.5L) vs Remote (₹6.5L)
+                </button>
+            </div>
+
+            <!-- Comparison Cards Grid -->
+            <div class="compare-cards-grid margin-top-lg">
+                <!-- Offer A Card -->
+                <div class="glass-card compare-offer-card" id="card-offer-a">
+                    <div class="offer-card-badge badge-a">OFFER A</div>
+                    <div class="form-group margin-top-sm">
+                        <label for="comp-company-a">Company / Employer Name</label>
+                        <input type="text" id="comp-company-a" class="form-input" value="TechCorp Systems" placeholder="e.g. Infosys, TCS, Amazon">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-role-a">Role / Designation</label>
+                        <input type="text" id="comp-role-a" class="form-input" value="Software Engineer" placeholder="e.g. Associate Engineer">
+                    </div>
+                    
+                    <div class="form-grid-2 margin-top-sm">
+                        <div class="form-group">
+                            <label for="comp-ctc-a">Annual CTC (<span class="currency-sym-text">₹</span>)</label>
+                            <input type="number" id="comp-ctc-a" class="form-input" value="1500000" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="comp-bonus-a">Joining / Sign-on Bonus (<span class="currency-sym-text">₹</span>)</label>
+                            <input type="number" id="comp-bonus-a" class="form-input" value="100000" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="comp-variable-a">Variable Pay %</label>
+                            <input type="number" id="comp-variable-a" class="form-input" value="10" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="comp-health-a">Health Cover (<span class="currency-sym-text">₹</span>)</label>
+                            <input type="number" id="comp-health-a" class="form-input" value="500000" placeholder="e.g. 500000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comp-workmode-a">Work Arrangement</label>
+                        <select id="comp-workmode-a" class="form-select">
+                            <option value="Hybrid (3 days office)" selected>Hybrid (3 days office)</option>
+                            <option value="Full In-Office">Full In-Office</option>
+                            <option value="100% Remote / WFH">100% Remote / WFH</option>
+                        </select>
+                    </div>
+
+                    <!-- Calculated Metrics for Offer A -->
+                    <div class="compare-metrics-box margin-top-md" id="metrics-offer-a">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Offer B Card -->
+                <div class="glass-card compare-offer-card" id="card-offer-b">
+                    <div class="offer-card-badge badge-b">OFFER B</div>
+                    <div class="form-group margin-top-sm">
+                        <label for="comp-company-b">Company / Employer Name</label>
+                        <input type="text" id="comp-company-b" class="form-input" value="HyperScale Labs" placeholder="e.g. Startup or Fintech">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-role-b">Role / Designation</label>
+                        <input type="text" id="comp-role-b" class="form-input" value="Backend Developer" placeholder="e.g. Product Engineer">
+                    </div>
+                    
+                    <div class="form-grid-2 margin-top-sm">
+                        <div class="form-group">
+                            <label for="comp-ctc-b">Annual CTC (<span class="currency-sym-text">₹</span>)</label>
+                            <input type="number" id="comp-ctc-b" class="form-input" value="1800000" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="comp-bonus-b">Joining / Sign-on Bonus (<span class="currency-sym-text">₹</span>)</label>
+                            <input type="number" id="comp-bonus-b" class="form-input" value="250000" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="comp-variable-b">Variable Pay %</label>
+                            <input type="number" id="comp-variable-b" class="form-input" value="20" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="comp-health-b">Health Cover (<span class="currency-sym-text">₹</span>)</label>
+                            <input type="number" id="comp-health-b" class="form-input" value="300000" placeholder="e.g. 300000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comp-workmode-b">Work Arrangement</label>
+                        <select id="comp-workmode-b" class="form-select">
+                            <option value="100% Remote / WFH">100% Remote / WFH</option>
+                            <option value="Hybrid (3 days office)">Hybrid (3 days office)</option>
+                            <option value="Full In-Office" selected>Full In-Office</option>
+                        </select>
+                    </div>
+
+                    <!-- Calculated Metrics for Offer B -->
+                    <div class="compare-metrics-box margin-top-md" id="metrics-offer-b">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- EmployEase AI Verdict & Recommendation -->
+            <div class="glass-card compare-verdict-card margin-top-xl" id="compare-verdict-container">
+                <!-- Dynamically rendered verdict -->
+            </div>
+        </section>
+
+        <!-- ============================================
+             TAB 4: FIRST-JOB DOCUMENT CHECKLIST (NEW FEATURE)
+             ============================================ -->
+        <section class="tab-view" id="view-checklist">
+            <div class="view-hero">
+                <div class="hero-tag">DAY-ONE READINESS</div>
+                <h1 class="hero-title">First-Job <span class="gradient-text">Document Checklist</span></h1>
+                <p class="hero-sub">Never miss a critical statutory form or legal paper. Track all onboarding paperwork required by Indian HR, EPFO, and Income Tax authorities.</p>
+            </div>
+
+            <!-- Progress Header Card -->
+            <div class="glass-card checklist-progress-card">
+                <div class="progress-info-row">
+                    <div>
+                        <h3 class="progress-title">Onboarding Documentation Readiness</h3>
+                        <p class="progress-sub" id="checklist-status-message">Complete these items before your joining date.</p>
+                    </div>
+                    <div class="progress-badge" id="checklist-badge">0% Ready</div>
+                </div>
+                
+                <div class="progress-track margin-top-md">
+                    <div class="progress-fill" id="checklist-progress-bar" style="width: 0%;"></div>
+                </div>
+
+                <div class="checklist-filters margin-top-md">
+                    <button type="button" class="check-filter-btn active" data-filter="all">All Documents (<span id="cnt-all">14</span>)</button>
+                    <button type="button" class="check-filter-btn" data-filter="pending">Pending (<span id="cnt-pending">14</span>)</button>
+                    <button type="button" class="check-filter-btn" data-filter="completed">Completed (<span id="cnt-completed">0</span>)</button>
+                    <button type="button" class="btn-ghost-sm" id="reset-checklist-btn" style="margin-left: auto;">Reset Checklist</button>
+                </div>
+            </div>
+
+            <!-- Checklist Categories Grid -->
+            <div class="checklist-grid margin-top-xl" id="checklist-items-container">
+                <!-- Dynamically populated from JS -->
+            </div>
+        </section>
+
+        <!-- ============================================
+             TAB 5: 80C INVESTMENT STARTER GUIDE (NEW FEATURE)
+             ============================================ -->
+        <section class="tab-view" id="view-investment">
+            <div class="view-hero">
+                <div class="hero-tag">WEALTH & TAX SAVINGS</div>
+                <h1 class="hero-title">First-Time Earner <span class="gradient-text">Tax-Saving Starter Guide</span></h1>
+                <p class="hero-sub">Understand Section 80C, 80D, and NPS options without financial jargon. Learn where to invest your hard-earned money to maximize legal tax deductions.</p>
+            </div>
+
+            <!-- Quick 80C Capacity & EPF Status Card -->
+            <div class="glass-card invest-capacity-card">
+                <div class="invest-cap-header">
+                    <div>
+                        <h3>Section 80C Deduction Capacity Tracker</h3>
+                        <p class="invest-cap-sub">Statutory maximum deduction under Section 80C is <strong>₹1,50,000 per financial year</strong>.</p>
+                    </div>
+                    <div class="invest-cap-tag">
+                        <span>Max Limit: ₹1,50,000</span>
+                    </div>
+                </div>
+
+                <div class="invest-breakdown-row margin-top-md">
+                    <div class="invest-meter-item">
+                        <span class="meter-label">Mandatory EPF (12% of Basic):</span>
+                        <span class="meter-val" id="invest-epf-amount">₹0</span>
+                    </div>
+                    <div class="invest-meter-item">
+                        <span class="meter-label">Remaining 80C Headroom:</span>
+                        <span class="meter-val val-green" id="invest-remaining-80c">₹1,50,000</span>
+                    </div>
+                    <div class="invest-meter-item">
+                        <span class="meter-label">Estimated Tax Saved:</span>
+                        <span class="meter-val val-blue" id="invest-tax-saved">₹0 /yr</span>
+                    </div>
+                </div>
+
+                <div class="margin-top-md">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="invest-80c-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investment Vehicles Comparison Grid -->
+            <div class="investment-vehicles-grid margin-top-xl">
+                <!-- ELSS -->
+                <div class="glass-card invest-card highlight-card">
+                    <div class="invest-card-header">
+                        <div class="vehicle-icon">📈</div>
+                        <div>
+                            <h4>ELSS Mutual Funds</h4>
+                            <span class="vehicle-badge badge-green">Recommended for Youth</span>
+                        </div>
+                    </div>
+                    <p class="vehicle-desc">Equity Linked Savings Scheme mutual funds invest in stock markets with the <strong>shortest lock-in period (3 years)</strong> among all 80C instruments.</p>
+                    <div class="vehicle-specs margin-top-sm">
+                        <div class="spec-row"><span>Lock-in Period:</span><strong>3 Years (Lowest)</strong></div>
+                        <div class="spec-row"><span>Historical Returns:</span><strong>12% – 15% CAGR</strong></div>
+                        <div class="spec-row"><span>Risk Profile:</span><strong>Moderately High (Equity)</strong></div>
+                        <div class="spec-row"><span>Tax on Gains:</span><strong>LTCG exempt up to ₹1.25L</strong></div>
+                    </div>
+                    <div class="invest-card-tip margin-top-sm">
+                        💡 <em>Tip for freshers:</em> Start a monthly SIP of ₹3,000 – ₹5,000 in an ELSS index or flexi-cap fund.
+                    </div>
+                </div>
+
+                <!-- PPF -->
+                <div class="glass-card invest-card">
+                    <div class="invest-card-header">
+                        <div class="vehicle-icon">🏛️</div>
+                        <div>
+                            <h4>Public Provident Fund (PPF)</h4>
+                            <span class="vehicle-badge badge-blue">100% Sovereign Guarantee</span>
+                        </div>
+                    </div>
+                    <p class="vehicle-desc">Government-backed long-term savings account with sovereign capital protection and completely tax-free interest and maturity payouts (EEE status).</p>
+                    <div class="vehicle-specs margin-top-sm">
+                        <div class="spec-row"><span>Lock-in Period:</span><strong>15 Years</strong></div>
+                        <div class="spec-row"><span>Current Interest:</span><strong>7.1% p.a. (Compounded)</strong></div>
+                        <div class="spec-row"><span>Risk Profile:</span><strong>Zero (Govt of India backed)</strong></div>
+                        <div class="spec-row"><span>Tax Status:</span><strong>EEE (Exempt-Exempt-Exempt)</strong></div>
+                    </div>
+                    <div class="invest-card-tip margin-top-sm">
+                        💡 <em>Tip for freshers:</em> Open a PPF account with your primary bank early to start the 15-year clock ticking.
+                    </div>
+                </div>
+
+                <!-- NPS -->
+                <div class="glass-card invest-card">
+                    <div class="invest-card-header">
+                        <div class="vehicle-icon">🛡️</div>
+                        <div>
+                            <h4>NPS (Sec 80CCD 1B)</h4>
+                            <span class="vehicle-badge badge-purple">Extra ₹50,000 Deduction</span>
+                        </div>
+                    </div>
+                    <p class="vehicle-desc">National Pension System allows an <strong>additional ₹50,000 tax deduction</strong> over and above the ₹1.5 Lakh 80C limit for retirement building.</p>
+                    <div class="vehicle-specs margin-top-sm">
+                        <div class="spec-row"><span>Lock-in Period:</span><strong>Until Retirement (Age 60)</strong></div>
+                        <div class="spec-row"><span>Expected Returns:</span><strong>9% – 12% (Market linked)</strong></div>
+                        <div class="spec-row"><span>Extra Deduction:</span><strong>₹50,000 under 80CCD(1B)</strong></div>
+                        <div class="spec-row"><span>Asset Choices:</span><strong>Auto Choice / Active Equity</strong></div>
+                    </div>
+                    <div class="invest-card-tip margin-top-sm">
+                        💡 <em>Tip for freshers:</em> Great if your CTC is above ₹12 Lakhs and you want an extra tax shield.
+                    </div>
+                </div>
+
+                <!-- Health Insurance 80D -->
+                <div class="glass-card invest-card">
+                    <div class="invest-card-header">
+                        <div class="vehicle-icon">🩺</div>
+                        <div>
+                            <h4>Health Insurance (Sec 80D)</h4>
+                            <span class="vehicle-badge badge-amber">Up to ₹75,000 Total Cover</span>
+                        </div>
+                    </div>
+                    <p class="vehicle-desc">Premiums paid for personal health insurance (up to ₹25,000) and for senior citizen parents (up to ₹50,000) are deductible under Section 80D.</p>
+                    <div class="vehicle-specs margin-top-sm">
+                        <div class="spec-row"><span>Self & Family Limit:</span><strong>Up to ₹25,000 / year</strong></div>
+                        <div class="spec-row"><span>Senior Parents Limit:</span><strong>Up to ₹50,000 / year</strong></div>
+                        <div class="spec-row"><span>Preventive Checkup:</span><strong>Up to ₹5,000 included</strong></div>
+                        <div class="spec-row"><span>Benefit:</span><strong>Protection + Tax Reduction</strong></div>
+                    </div>
+                    <div class="invest-card-tip margin-top-sm">
+                        💡 <em>Tip for freshers:</em> Never rely 100% on corporate group insurance; maintain a personal super top-up.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Starter Allocation Strategy Presets -->
+            <div class="glass-card invest-preset-card margin-top-xl">
+                <h3>🎯 Recommended First-Year Allocation Presets</h3>
+                <p class="sub-text">Choose a strategy to automatically push these values into your Paycheck calculator:</p>
+
+                <div class="strategy-pills margin-top-md">
+                    <button type="button" class="strategy-pill-btn active" data-strategy="growth">
+                        <strong>🚀 Wealth Maximizer (Aggressive)</strong>
+                        <span>70% ELSS Mutual Funds + 30% PPF</span>
+                    </button>
+                    <button type="button" class="strategy-pill-btn" data-strategy="balanced">
+                        <strong>⚖️ Balanced First-Timer</strong>
+                        <span>50% ELSS + 30% PPF + 20% NPS</span>
+                    </button>
+                    <button type="button" class="strategy-pill-btn" data-strategy="safety">
+                        <strong>🛡️ Conservative & Safe</strong>
+                        <span>60% PPF + 40% NPS</span>
+                    </button>
+                </div>
+
+                <div class="strategy-details margin-top-md" id="strategy-details-display">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             TAB 6: HEALTH PLAN MATRIX
              ============================================ -->
         <section class="tab-view" id="view-health">
             <div class="view-hero">
+                <div class="hero-tag">INSURANCE CALCULATOR</div>
                 <h1 class="hero-title">Health Insurance <span class="gradient-text">Decision Matrix</span></h1>
-                <p class="hero-sub">Deductibles vs. Out-of-Pocket Maximums demystified — simulate actual costs under 3 healthcare usage scenarios.</p>
+                <p class="hero-sub">Deductibles vs. Out-of-Pocket Maximums demystified — stress test total annual healthcare outlays across 3 real-world usage scenarios.</p>
             </div>
 
             <!-- Health Plan Comparison Cards -->
@@ -383,24 +828,27 @@
 
             <!-- Healthcare Usage Scenario Stress Test -->
             <div class="glass-card scenario-simulator margin-top-xl">
-                <h3>🏥 Annual Healthcare Usage Stress-Test</h3>
-                <p class="scenario-sub">Select a health scenario to compare total out-of-pocket exposure across all plans:</p>
+                <div class="panel-header-line">
+                    <h3>🏥 Annual Healthcare Usage Stress-Test</h3>
+                    <span class="badge-subtle">Real-Time Simulation</span>
+                </div>
+                <p class="scenario-sub">Select a health scenario to calculate actual total financial exposure (Annual Premiums + Out-of-Pocket medical expenses):</p>
 
                 <div class="scenario-pills margin-top-md">
                     <button type="button" class="scenario-btn active" data-scenario="healthy">
                         <span class="sc-icon">🟢</span>
                         <span class="sc-name">Healthy Year</span>
-                        <span class="sc-desc">Annual checkup only</span>
+                        <span class="sc-desc">Annual checkups & minor clinic visit</span>
                     </button>
                     <button type="button" class="scenario-btn" data-scenario="moderate">
                         <span class="sc-icon">🟡</span>
                         <span class="sc-name">Moderate Usage</span>
-                        <span class="sc-desc">Quarterly doctor visits + meds</span>
+                        <span class="sc-desc">Quarterly visits + prescription drugs</span>
                     </button>
                     <button type="button" class="scenario-btn" data-scenario="catastrophic">
                         <span class="sc-icon">🔴</span>
                         <span class="sc-name">Major Emergency</span>
-                        <span class="sc-desc">Hospitalization / Surgery</span>
+                        <span class="sc-desc">Hospitalization or surgery procedure</span>
                     </button>
                 </div>
 
@@ -409,17 +857,35 @@
         </section>
 
         <!-- ============================================
-             TAB 4: JARGON TRANSLATOR
+             TAB 7: JARGON TRANSLATOR (ENHANCED SEARCH)
              ============================================ -->
         <section class="tab-view" id="view-jargon">
             <div class="view-hero">
-                <h1 class="hero-title">Bureaucratic <span class="gradient-text">Jargon Translator</span></h1>
-                <p class="hero-sub">No dense legalese. Search any corporate HR or government tax term to see what it actually means for your bank account.</p>
+                <div class="hero-tag">PLAIN ENGLISH GLOSSARY</div>
+                <h1 class="hero-title">Employment & Tax <span class="gradient-text">Jargon Decoder</span></h1>
+                <p class="hero-sub">Zero confusing legalese. Search any corporate HR, contract clause, or government tax term to see what it actually means for your bank account.</p>
             </div>
 
-            <!-- Jargon Search Bar -->
-            <div class="jargon-search-bar margin-top-lg">
-                <input type="text" id="jargon-search-input" class="form-input search-input" placeholder="🔍 Search terms... (e.g. CTC, HRA, 80C, FICA, Deductible, OOP Max)">
+            <!-- Jargon Search and Category Filter Bar -->
+            <div class="jargon-search-container glass-card margin-top-lg">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="jargon-search-input" class="form-input search-input" placeholder="Search terms... (e.g. Variable Pay, CTC, Notice Period, 80C, OOP Max, Deductible, Gratuity)">
+                    <button type="button" id="jargon-clear-btn" class="search-clear-btn" title="Clear search">✕</button>
+                </div>
+
+                <div class="jargon-category-pills margin-top-md">
+                    <button type="button" class="category-pill active" data-cat="all">All Categories</button>
+                    <button type="button" class="category-pill" data-cat="Offer Letter & HR">Offer Letter & HR</button>
+                    <button type="button" class="category-pill" data-cat="Salary & In-Hand">Salary & In-Hand</button>
+                    <button type="button" class="category-pill" data-cat="Tax & Deductions">Tax & Deductions</button>
+                    <button type="button" class="category-pill" data-cat="Health Insurance">Health Insurance</button>
+                    <button type="button" class="category-pill" data-cat="Legal & Clauses">Legal & Clauses</button>
+                </div>
+
+                <div class="jargon-results-meta margin-top-sm">
+                    <span id="jargon-counter" class="jargon-counter-text">Showing all terms</span>
+                </div>
             </div>
 
             <!-- Jargon Cards Grid -->
@@ -427,46 +893,100 @@
         </section>
 
         <!-- ============================================
-             TAB 5: EXECUTIVE SUMMARY
+             TAB 8: EXECUTIVE SUMMARY & PDF EXPORT
              ============================================ -->
         <section class="tab-view" id="view-executive">
-            <div class="executive-paper glass-card">
+            <div class="executive-paper glass-card" id="printable-executive-report">
                 <div class="exec-header">
-                    <div>
-                        <h2>⚡ EmployEase Onboarding Executive Report</h2>
+                    <div class="exec-header-left">
+                        <div class="exec-brand">
+                            <span class="brand-icon">⚡</span>
+                            <h2>EmployEase Onboarding Executive Report</h2>
+                        </div>
                         <p class="exec-date" id="exec-date-stamp"></p>
                     </div>
-                    <button type="button" class="btn-primary" id="print-exec-btn">🖨️ Print / Save PDF</button>
+                    <div class="exec-header-actions no-print">
+                        <button type="button" class="btn-primary" id="print-exec-btn">
+                            🖨️ Download / Print PDF Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Printable Report Notice -->
+                <div class="exec-callout margin-top-md">
+                    <strong>📌 First-Time Earner Summary:</strong> This official report summarizes your compensation structure, net take-home salary, estimated tax liability, and document readiness checklist for your records.
                 </div>
 
                 <div class="exec-section margin-top-lg">
-                    <h3>1. Compensation & In-Hand Summary</h3>
+                    <div class="exec-section-header">
+                        <h3>1. Compensation & Net Take-Home Breakdown</h3>
+                        <span class="exec-section-tag">Primary Cash Flow</span>
+                    </div>
                     <div class="exec-grid-2 margin-top-sm" id="exec-comp-summary"></div>
                 </div>
 
                 <div class="exec-section margin-top-lg">
-                    <h3>2. Tax & Deductions Breakdown</h3>
+                    <div class="exec-section-header">
+                        <h3>2. Tax Liabilities & Statutory Deductions</h3>
+                        <span class="exec-section-tag">Statutory Deductions</span>
+                    </div>
                     <div class="exec-grid-2 margin-top-sm" id="exec-tax-summary"></div>
                 </div>
 
                 <div class="exec-section margin-top-lg">
-                    <h3>3. Actionable Onboarding Checklist</h3>
-                    <ul class="exec-checklist margin-top-sm">
-                        <li>✅ Submit Rent Agreement & Receipts to HR for HRA Tax Exemptions.</li>
+                    <div class="exec-section-header">
+                        <h3>3. Onboarding & Compliance Checklist Status</h3>
+                        <span class="exec-section-tag" id="exec-checklist-score">0 of 14 Verified</span>
+                    </div>
+                    <ul class="exec-checklist margin-top-sm" id="exec-checklist-items">
+                        <li>✅ Submit Rent Agreement & Landlord Receipts to HR for HRA Tax Exemptions.</li>
                         <li>✅ Declare Section 80C Investments (EPF, ELSS funds, PPF) early in the financial year.</li>
-                        <li>✅ Select primary health insurance plan based on your out-of-pocket risk tolerance.</li>
-                        <li>✅ Verify Form 16 / Tax Deducted at Source (TDS) statements quarterly.</li>
+                        <li>✅ Complete Form 11 (EPF) and Form 2 (Nomination) with HR onboarding desk.</li>
+                        <li>✅ Verify Form 16 / Tax Deducted at Source (TDS) statements quarterly on TRACES.</li>
                     </ul>
+                </div>
+
+                <!-- Project Attribution & Disclaimer Footer -->
+                <div class="exec-footer margin-top-xl">
+                    <div class="exec-team-info">
+                        <strong>Group Project Team:</strong> Nitheesh (@nitheesh02024), Gokul Srinivasan (@gokulsrinivasan546-ux), Amishi (@amishixx).
+                    </div>
+                    <div class="exec-disclaimer-text">
+                        *EmployEase is an educational financial decision-support tool. Figures provided are estimations based on published tax slabs and standard statutory deduction rules.
+                    </div>
                 </div>
             </div>
         </section>
 
     </main>
 
+    <!-- Global App Footer -->
+    <footer class="app-footer no-print">
+        <div class="footer-container">
+            <div class="footer-left">
+                <span class="footer-brand">⚡ EmployEase</span>
+                <p>Designed for first-time earners navigating offer letters, income tax regimes, and paycheck line items.</p>
+            </div>
+            <div class="footer-right">
+                <div class="team-credits">
+                    <span>Group Project Contributors:</span>
+                    <div class="team-links">
+                        <a href="https://github.com/nitheesh02024" target="_blank" rel="noopener">Nitheesh</a> •
+                        <a href="https://github.com/gokulsrinivasan546-ux" target="_blank" rel="noopener">Gokul Srinivasan</a> •
+                        <a href="https://github.com/amishixx" target="_blank" rel="noopener">Amishi</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <!-- Tooltip Overlay -->
     <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true">
         <div class="tooltip-content" id="tooltip-content"></div>
     </div>
+
+    <!-- Toast Notification Overlay -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
     <script src="app.js"></script>
 </body>
