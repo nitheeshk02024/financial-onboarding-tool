@@ -1,0 +1,268 @@
+/* ============================================
+   EMPLOYEASE — THEME, MOTION & NEW COMPONENTS
+   Adds: light/dark theme, decorative accent lines,
+   entrance animations (no hover-triggered motion),
+   Compare Offers / Document Checklist / Investment
+   Guide component styles, mobile polish.
+   ============================================ */
+
+/* ---------- LIGHT THEME OVERRIDE ---------- */
+:root[data-theme="light"] {
+    --bg-deepest: #F3EFE6;
+    --bg-deep: #E7E0D0;
+    --bg-card: rgba(255, 255, 255, 0.62);
+    --bg-card-hover: rgba(255, 255, 255, 0.78);
+    --bg-card-active: rgba(255, 255, 255, 0.9);
+    --border-subtle: rgba(60, 80, 125, 0.18);
+    --border-glow: rgba(60, 80, 125, 0.32);
+
+    --text-primary: #1B2233;
+    --text-secondary: #3F4A5E;
+    --text-muted: #6B7688;
+
+    --shadow-card: 0 8px 28px rgba(60, 80, 125, 0.12);
+    --shadow-glow: 0 0 24px rgba(60, 80, 125, 0.10);
+}
+
+:root[data-theme="light"] body { background: var(--bg-deepest); }
+:root[data-theme="light"] .orb { opacity: 0.10; }
+:root[data-theme="light"] .grid-overlay {
+    background-image: linear-gradient(rgba(20, 30, 50, 0.03) 1px, transparent 1px),
+                       linear-gradient(90deg, rgba(20, 30, 50, 0.03) 1px, transparent 1px);
+}
+:root[data-theme="light"] .top-nav,
+:root[data-theme="light"] .main-tabs-nav,
+:root[data-theme="light"] .ingestion-bar { background: rgba(255, 255, 255, 0.72); }
+:root[data-theme="light"] .tooltip { background: rgba(255, 255, 255, 0.97); }
+:root[data-theme="light"] .form-input,
+:root[data-theme="light"] .form-select,
+:root[data-theme="light"] .form-textarea { color: var(--text-primary); }
+:root[data-theme="light"] ::placeholder { color: var(--text-muted); opacity: 0.8; }
+
+/* ---------- THEME TOGGLE BUTTON ---------- */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    cursor: pointer;
+    font-size: 1rem;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.theme-toggle-btn:active { transform: scale(0.88); box-shadow: 0 0 0 4px rgba(91, 122, 184, 0.18); }
+.theme-icon-light { display: none; }
+:root[data-theme="light"] .theme-icon-dark { display: none; }
+:root[data-theme="light"] .theme-icon-light { display: inline; }
+
+/* ---------- DECORATIVE ACCENT LINES ---------- */
+.accent-line {
+    position: relative;
+    height: 2px;
+    margin: 22px auto 0;
+    max-width: 220px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-emerald), transparent);
+    background-size: 200% 100%;
+    animation: accentSweep 4.5s ease-in-out infinite;
+}
+.section-divider {
+    height: 1px;
+    width: 100%;
+    margin: 32px 0;
+    background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+}
+@keyframes accentSweep {
+    0%   { background-position: 0% 0; }
+    50%  { background-position: 100% 0; }
+    100% { background-position: 0% 0; }
+}
+
+/* ---------- ENTRANCE ANIMATIONS (no hover) ---------- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.tab-view.active { animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.compare-card,
+.checklist-group,
+.invest-card {
+    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.compare-card:nth-of-type(1) { animation-delay: 0.02s; }
+.compare-card:nth-of-type(2) { animation-delay: 0.12s; }
+.checklist-group:nth-child(1) { animation-delay: 0.02s; }
+.checklist-group:nth-child(2) { animation-delay: 0.1s; }
+.checklist-group:nth-child(3) { animation-delay: 0.18s; }
+.checklist-group:nth-child(4) { animation-delay: 0.26s; }
+.invest-card:nth-child(1) { animation-delay: 0.02s; }
+.invest-card:nth-child(2) { animation-delay: 0.08s; }
+.invest-card:nth-child(3) { animation-delay: 0.14s; }
+.invest-card:nth-child(4) { animation-delay: 0.2s; }
+.invest-card:nth-child(5) { animation-delay: 0.26s; }
+.invest-card:nth-child(6) { animation-delay: 0.32s; }
+
+/* Click-press feedback (not hover-based) */
+.btn-primary:active, .btn-secondary:active, .btn-ingest:active {
+    transform: scale(0.97);
+}
+.tab-btn:active, .freq-pill:active, .scenario-btn:active, .country-pill:active {
+    transform: scale(0.95);
+}
+
+/* Subtle glow pulse on the hero amount when it updates */
+@keyframes pulseGlow {
+    0%   { text-shadow: 0 0 0 rgba(224, 197, 143, 0); }
+    40%  { text-shadow: 0 0 26px rgba(224, 197, 143, 0.55); }
+    100% { text-shadow: 0 0 0 rgba(224, 197, 143, 0); }
+}
+.value-pulse { animation: pulseGlow 0.9s ease-out; }
+
+/* ---------- COMPARE OFFERS ---------- */
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 18px;
+    align-items: start;
+}
+.compare-vs {
+    align-self: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border: 1px dashed var(--border-glow);
+    border-radius: var(--radius-full);
+}
+.compare-card-header { display: flex; }
+.compare-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    background: rgba(91, 122, 184, 0.16);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(91, 122, 184, 0.3);
+}
+.compare-badge-b { background: rgba(224, 197, 143, 0.14); color: var(--accent-emerald); border-color: rgba(224, 197, 143, 0.3); }
+
+.compare-results { display: grid; gap: 10px; }
+.compare-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    font-size: 0.9rem;
+}
+.compare-row.compare-highlight { border-color: var(--accent-emerald); box-shadow: 0 0 0 1px rgba(224, 197, 143, 0.25); }
+.compare-row-label { color: var(--text-secondary); font-weight: 600; }
+.compare-row-b { font-family: var(--font-mono); }
+.compare-winner-tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-emerald);
+}
+.compare-disclaimer { margin-top: 14px; font-size: 0.78rem; color: var(--text-muted); font-style: italic; }
+
+/* ---------- DOCUMENT CHECKLIST ---------- */
+.checklist-progress-card { padding: 20px 24px; }
+.checklist-progress-head { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 700; }
+.checklist-progress-track {
+    margin-top: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+}
+.checklist-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: var(--radius-full);
+    background: var(--gradient-warm);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.checklist-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.checklist-group { padding: 22px; }
+.checklist-group h4 { font-family: var(--font-heading); font-size: 1.05rem; margin-bottom: 4px; }
+.checklist-group-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; }
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border-subtle);
+    cursor: pointer;
+}
+.checklist-item:first-of-type { border-top: none; }
+.checklist-item input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent-emerald); cursor: pointer; }
+.checklist-item-text { font-size: 0.88rem; line-height: 1.5; }
+.checklist-item-text small { display: block; color: var(--text-muted); font-size: 0.76rem; margin-top: 2px; }
+.checklist-item.checked .checklist-item-text { color: var(--text-muted); text-decoration: line-through; }
+
+/* ---------- INVESTMENT GUIDE ---------- */
+.invest-80c-label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+.invest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.invest-card { padding: 22px; border-left: 3px solid var(--accent-emerald); }
+.invest-card h4 { font-family: var(--font-heading); font-size: 1rem; margin-bottom: 6px; }
+.invest-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+.invest-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent-amber);
+    background: rgba(196, 151, 62, 0.12);
+    border: 1px solid rgba(196, 151, 62, 0.28);
+    padding: 2px 9px;
+    border-radius: var(--radius-full);
+    margin-bottom: 8px;
+}
+
+/* Save-progress toast tweak */
+.save-indicator {
+    position: fixed;
+    bottom: 22px;
+    left: 22px;
+    z-index: 9999;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+.save-indicator.show { opacity: 1; transform: translateY(0); }
+
+/* ---------- MOBILE RESPONSIVENESS POLISH ---------- */
+@media (max-width: 720px) {
+    .compare-grid { grid-template-columns: 1fr; }
+    .compare-vs { justify-self: center; }
+    .compare-row { grid-template-columns: 1fr 1fr 1fr; font-size: 0.8rem; padding: 8px 10px; }
+    .nav-container { gap: 10px; }
+    .standard-selector, .currency-converter-badge { width: 100%; justify-content: space-between; }
+    .tabs-container { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tabs-container::-webkit-scrollbar { display: none; }
+    .checklist-groups, .invest-grid { grid-template-columns: 1fr; }
+    .glass-card { padding: 18px; }
+    .hero-title { font-size: 1.5rem; line-height: 1.3; }
+}
+
+@media print {
+    .theme-toggle-btn, .top-nav, .main-tabs-nav, .ingestion-bar, .save-indicator { display: none !important; }
+}
